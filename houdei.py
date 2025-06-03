@@ -21,14 +21,13 @@ bottun = driver.find_element(By.ID,"pref13")
 #地域の選択
 actions =ActionChains(driver)
 actions.scroll_to_element(bottun).perform()
-
-actions.click(bottun).perform()
+bottun.click()
 time.sleep(1)
 
 tosimaku_locator = driver.find_element(By.ID,"town13116")
 tosimaku =WebDriverWait(driver, 20).until(
         EC.element_to_be_clickable(tosimaku_locator))
-actions.click(tosimaku).perform()
+tosimaku.click()
 
 time.sleep(1)
 #放課後デイサービス選択、一覧表示
@@ -36,21 +35,20 @@ servece_locator =(By.ID,"service")
 service =WebDriverWait(driver,10).until(
     EC.element_to_be_clickable(servece_locator)
 )
-actions.click(service).perform()
-time.sleep(1)
+service.click()
+# time.sleep(1)
 
-houkago_locator =(By.ID,"SRVC65")
-service1 =WebDriverWait(driver,30).until(
-    EC.presence_of_element_located(houkago_locator)
-)
+service_list = driver.find_element(By.CLASS_NAME,"subservice06")#放課後デイ
 
-driver.execute_script("arguments[0].scrollIntoView({ block: 'center' });",service1)
-check =driver.find_element(By.CSS_SELECTOR,"#SRVC65")
-actions.click(check).perform()
+driver.execute_script("arguments[0].scrollIntoView({ block: 'center' });",service_list)
+
+check_box =driver.find_element(By.CSS_SELECTOR,"#SRVC65")
+driver.execute_script("arguments[0].click();",check_box)
+# actions.click(check).perform()
 #一覧ページへ
 itiran=driver.find_element(By.ID,'list')
 driver.execute_script("arguments[0].scrollIntoView({block:'center'});",itiran)
-actions.click(itiran).perform()
+itiran.click()
 
 #一覧からurlまでスクロールここからループ
 list_houdei =[]
@@ -106,7 +104,3 @@ for j in range(totalpage):
     time.sleep(1)
 
 print(df_houdei)
-# actions.key_down(Keys.CONTROL).perform()
-# actions.click(list1[2]).perform()
-# driver.execute_script("window.open", list1[2])
-# actions.key_up(Keys.CONTROL).perform()
