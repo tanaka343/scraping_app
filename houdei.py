@@ -1,4 +1,4 @@
-###完成版仮
+###完成版
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
@@ -16,7 +16,7 @@ from pathlib import Path
 S=input('地域を入力 例）東京都豊島区 ')
 try:
   match=re.search(r'北海道(.*)',S)
-  match2=re.search(r'京都府(.*)',S)
+  match2=re.search(r'京都府(.*)',S)##都府両方入っていてエラーがでるため
   if match:
     todou='北海道'
     siku= match.group(1)
@@ -28,6 +28,7 @@ try:
 except ValueError:
     print('入力形式が正しくありません。')
     sys.exit(1)
+
 #Excelテンプレートシートをコピーしてシート名を変更
 try:
   row_path=input('excelファイルパスを入力').strip().replace('"','')
@@ -104,7 +105,7 @@ def get_data(driver):
     return
   #一覧からurlまでスクロールここからループ
   list_houdei =[]
-  db_houdei=[]
+  
   totalpage =int(driver.find_element(By.ID,'totalpage').text)
   for j in range(1,totalpage+1):
     #ページが完全に切り替わってから要素を取得
@@ -199,12 +200,14 @@ reigai={
   
 }
 
+tyouhuku1='神奈川県相模原市'
+tyouhuku2='大阪府堺市'
 if S in reigai:
   list_houdei=[]
   for i in reigai[S]:
     siku=i
     driver =get_site()
-    if S=='神奈川県相模原市':
+    if S==tyouhuku1:
       todou_locator = (By.XPATH,f"//a[text()='{todou}']")
       todou_a =WebDriverWait(driver,10).until(
       EC.element_to_be_clickable(todou_locator)
@@ -215,7 +218,7 @@ if S in reigai:
       siku_a =WebDriverWait(driver, 10).until(
             EC.element_to_be_clickable(siku_locator))
       siku_a.click()
-    elif S=='大阪府堺市':
+    elif S==tyouhuku2:
       todou_locator = (By.XPATH,f"//a[text()='{todou}']")
       todou_a =WebDriverWait(driver,10).until(
       EC.element_to_be_clickable(todou_locator)
