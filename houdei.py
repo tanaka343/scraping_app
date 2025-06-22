@@ -12,7 +12,8 @@ import re
 from selenium.common.exceptions import TimeoutException
 import sys 
 from pathlib import Path
-#入力部分
+
+#--- 入力処理部分 ---
 S=input('地域を入力 例）東京都豊島区 ')
 try:
   match=re.search(r'北海道(.*)',S)
@@ -29,7 +30,7 @@ except ValueError:
     print('入力形式が正しくありません。')
     sys.exit(1)
 
-#Excelテンプレートシートをコピーしてシート名を変更
+#-- Excelシート準備 ---
 try:
   row_path=input('excelファイルパスを入力').strip().replace('"','')
   wb_path=Path(row_path)
@@ -43,6 +44,7 @@ except PermissionError:
   print('excelファイルを閉じてください。')
   sys.exit(1)
 
+#---  サイトへ接続　---
 def get_site():#サイトへ
   options = Options()
   options.add_experimental_option("detach", True)
@@ -51,8 +53,8 @@ def get_site():#サイトへ
   "https://www.wam.go.jp/sfkohyoout/COP000100E0000.do")
   return driver
 
+#--- 地域を選択するブラウザ操作 ---
 def select_tikiki(driver,todou,siku):
-  #都道府県の選択
   try:
     todou_locator = (By.XPATH,f"//a[text()='{todou}']")
     todou_a =WebDriverWait(driver,10).until(
@@ -74,6 +76,8 @@ def select_tikiki(driver,todou,siku):
     print('市区町村名が正しくありません。')
     driver.close()
     sys.exit(1)
+
+#--- 転記するデータを抽出する動作 ---
 def get_data(driver):
   #サービスを選択
   servece_locator =(By.ID,"service")
@@ -175,7 +179,7 @@ def get_data(driver):
       nextpage.click()
      
   return list_houdei
-##入力：例外処理地域リスト
+#--- 例外処理地域リスト---
 reigai={
   '北海道札幌市':["中央区","北区","東区","白石区","豊平区","南区","西区","厚別区","手稲区","清田区"],
   '宮城県仙台市':['青葉区', '宮城野区', '若林区', '太白区', '泉区'],
@@ -200,6 +204,7 @@ reigai={
   
 }
 
+#--- 実行 ---
 tyouhuku1='神奈川県相模原市'
 tyouhuku2='大阪府堺市'
 if S in reigai:
@@ -244,7 +249,7 @@ else:
 df_houdei = pd.DataFrame(list_houdei) 
     
 
-#エクセルに転記
+#--- エクセル書き込み処理 ---
 with pd.ExcelWriter(wb_path,engine="openpyxl",mode="a",if_sheet_exists="overlay") as writer:
   df_houdei.to_excel(writer,sheet_name=sheet_name,startrow=1,startcol=0,header=False,index=False)
 
