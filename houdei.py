@@ -14,22 +14,28 @@ import sys
 from pathlib import Path
 
 #--- 入力処理部分 ---
-S=input('地域を入力 例）東京都豊島区 ')
-row_path=input('excelファイルパスを入力').strip().replace('"','')
-try:
-  match=re.search(r'北海道(.*)',S)
-  match2=re.search(r'京都府(.*)',S)##都府両方入っていてエラーがでるため
-  if match:
-    todou='北海道'
-    siku= match.group(1)
-  elif match2:
-    todou='京都'
-    siku=match2.group(1)
-  else:
-    todou,siku=re.split(r'都|府|県',S,maxsplit=2,flags=0)
-except ValueError:
-    print('入力形式が正しくありません。')
-    sys.exit(1)
+def get_user_input():
+  S=input('地域を入力 例）東京都豊島区 ')
+  row_path=input('excelファイルパスを入力').strip().replace('"','')
+  return S,row_path
+
+#--- 入力された文字を整形 ---
+def format_input_data(S):
+  try:
+    match=re.search(r'北海道(.*)',S)
+    match2=re.search(r'京都府(.*)',S)##都府両方入っていてエラーがでるため
+    if match:
+      todou='北海道'
+      siku= match.group(1)
+    elif match2:
+      todou='京都'
+      siku=match2.group(1)
+    else:
+      todou,siku=re.split(r'都|府|県',S,maxsplit=2,flags=0)
+    return todou,siku
+  except ValueError:
+      print('入力形式が正しくありません。')
+      sys.exit(1)
 
 #-- Excelシート準備 ---
 def create_excelsheet(row_path,siku):
@@ -209,6 +215,9 @@ reigai={
 #--- 実行 ---
 tyouhuku1='神奈川県相模原市'
 tyouhuku2='大阪府堺市'
+
+S,row_path =get_user_input()
+todou,siku =format_input_data(S)
 if S in reigai:
   list_houdei=[]
   for i in reigai[S]:
