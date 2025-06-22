@@ -5,11 +5,11 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-import time
+from selenium.common.exceptions import TimeoutException
 import pandas as pd
+import time
 import openpyxl
 import re
-from selenium.common.exceptions import TimeoutException
 import sys 
 from pathlib import Path
 
