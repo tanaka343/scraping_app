@@ -15,6 +15,7 @@ from pathlib import Path
 
 #--- 入力処理部分 ---
 S=input('地域を入力 例）東京都豊島区 ')
+row_path=input('excelファイルパスを入力').strip().replace('"','')
 try:
   match=re.search(r'北海道(.*)',S)
   match2=re.search(r'京都府(.*)',S)##都府両方入っていてエラーがでるため
@@ -31,18 +32,19 @@ except ValueError:
     sys.exit(1)
 
 #-- Excelシート準備 ---
-try:
-  row_path=input('excelファイルパスを入力').strip().replace('"','')
-  wb_path=Path(row_path)
-  wb=openpyxl.load_workbook(wb_path)
-  copy_sheet=wb.copy_worksheet(wb['テンプレート※コピーして名前を都市名に変更して使用'])
-  copy_sheet.title=siku
-  sheet_name =copy_sheet.title#シート名が重複した場合に対応例）豊島区、豊島区1
-  wb.active=copy_sheet
-  wb.save(wb_path)
-except PermissionError:
-  print('excelファイルを閉じてください。')
-  sys.exit(1)
+def create_excelsheet(row_path,siku):
+  try: 
+    wb_path =Path(row_path)
+    wb =openpyxl.load_workbook(wb_path)
+    copy_sheet =wb.copy_worksheet(wb['テンプレート※コピーして名前を都市名に変更して使用'])
+    copy_sheet.title =siku
+    sheet_name = copy_sheet.title#シート名が重複した場合に対応例）豊島区、豊島区1
+    wb.active=copy_sheet
+    wb.save(wb_path)
+    return wb_path,sheet_name
+  except PermissionError:
+    print('excelファイルを閉じてください。')
+    sys.exit(1)
 
 #---  サイトへ接続　---
 def get_site():#サイトへ
@@ -247,7 +249,7 @@ else:
   driver.quit()
 
 df_houdei = pd.DataFrame(list_houdei) 
-    
+wb_path,sheet_name =create_excelsheet(row_path,siku)   
 
 #--- エクセル書き込み処理 ---
 with pd.ExcelWriter(wb_path,engine="openpyxl",mode="a",if_sheet_exists="overlay") as writer:
