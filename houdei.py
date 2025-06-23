@@ -187,6 +187,12 @@ def get_data(driver):
       nextpage.click()
      
   return list_houdei
+
+#--- エクセル書き込み処理 ---
+def  write_to_excel(wb_path,df_houdei,sheet_name):
+  with pd.ExcelWriter(wb_path,engine="openpyxl",mode="a",if_sheet_exists="overlay") as writer:
+    df_houdei.to_excel(writer,sheet_name=sheet_name,startrow=1,startcol=0,header=False,index=False)
+
 #--- 例外処理地域リスト---
 reigai={
   '北海道札幌市':["中央区","北区","東区","白石区","豊平区","南区","西区","厚別区","手稲区","清田区"],
@@ -259,10 +265,7 @@ else:
 
 df_houdei = pd.DataFrame(list_houdei) 
 wb_path,sheet_name =create_excelsheet(row_path,siku)   
-
-#--- エクセル書き込み処理 ---
-with pd.ExcelWriter(wb_path,engine="openpyxl",mode="a",if_sheet_exists="overlay") as writer:
-  df_houdei.to_excel(writer,sheet_name=sheet_name,startrow=1,startcol=0,header=False,index=False)
+write_to_excel(wb_path,df_houdei,sheet_name)
 
 
 print(df_houdei)
