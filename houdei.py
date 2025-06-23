@@ -85,62 +85,41 @@ def select_tikiki(driver,todou,siku):
     driver.close()
     sys.exit(1)
 
-#--- 転記するデータを抽出する動作 ---
-def get_data(driver):
-  #サービスを選択
-  servece_locator =(By.ID,"service")
-  service =WebDriverWait(driver,20).until(
-      EC.element_to_be_clickable(servece_locator)
+#--- クリック可能になるまで待機、要素を取得してクリック ---
+def wait_and_click(driver,locator):
+  element =WebDriverWait(driver,20).until(
+    EC.element_to_be_clickable(locator)
   )
-  service.click()
+  element.click()
 
-  # 放課後デイサービスを選択##
-  houkago_locator =(By.ID,"SRVC65")
-  service1 =WebDriverWait(driver,30).until(
-      EC.presence_of_element_located(houkago_locator)
-  )
-  driver.execute_script("arguments[0].scrollIntoView({ block: 'center' });",service1)##jsで直接dom操作しないと動かない
-  driver.execute_script("arguments[0].click();",service1)
-  #画面が完全に切り替わってから要素取得
-  title =(By.ID,"selectedServices")
+#--- 画面が完全に切り替わるまで待機 ---
+def kirikae(driver,locator,text):
   WebDriverWait(driver,30).until(
-    EC.text_to_be_present_in_element(title,"放課後等デイサービス")
+    EC.text_to_be_present_in_element(locator,text)
   )
-  #一覧ページへ
-  itiran_locator =(By.ID,'list')
-  try:#条件に一致する事業所が見つからない場合
-    itiran=WebDriverWait(driver,20).until(
-      EC.element_to_be_clickable(itiran_locator)
-    )
-    itiran.click()
-  except TimeoutException :
-    return
-  #一覧からurlまでスクロールここからループ
-  list_houdei =[]
-  
-  totalpage =int(driver.find_element(By.ID,'totalpage').text)
-  for j in range(1,totalpage+1):
-    #ページが完全に切り替わってから要素を取得
-    pageElement =(By.ID,'currentpage')
-    WebDriverWait(driver,30).until(
-      EC.text_to_be_present_in_element(pageElement,str(j))
-    )
-    itiranElements =(By.XPATH,"//div[@class='detaillinkforeach']/a")
-    itiranList =WebDriverWait(driver,20).until(
-        EC.visibility_of_all_elements_located(itiranElements)
+
+#--- すべての要素が表示されるまで待機 ---
+def all_element(driver,locator):
+  elements =WebDriverWait(driver,20).until(
+        EC.visibility_of_all_elements_located(locator)
       )
-    itiranlength =len(itiranList)
-    for i in range(itiranlength):
-      data_houdei ={} 
-      targetElement =itiranList[i]
-      WebDriverWait(driver,20).until(
-        EC.element_to_be_clickable(targetElement)
-      )
-      #前タブ情報取得
+  return elements
+
+#--- jsでしか操作できない部分のクリック ---
+def js_click(driver,locator):
+  element =WebDriverWait(driver,30).until(
+      EC.presence_of_element_located(locator)
+  )
+  driver.execute_script("arguments[0].scrollIntoView({ block: 'center' });",element)
+  driver.execute_script("arguments[0].click();",element)
+
+#--- リンクを新しいタブで開き、そちらに切り替える ---
+def open_link_in_newtab(driver,element):
+  #前タブ情報取得
       original_tab =driver.current_window_handle
       initial_tabs =driver.window_handles
       #urlを新しいタブで開く
-      driver.execute_script("window.open(arguments[0].href,'_blank');",targetElement)
+      driver.execute_script("window.open(arguments[0].href,'_blank');",element)
 
       #後タブを取得
       current_tabs =driver.window_handles
@@ -150,20 +129,22 @@ def get_data(driver):
       new_set= set_current_tabs-set_initial_tabs
       new_tab = new_set.pop()
       driver.switch_to.window(new_tab)
+      return original_tab
 
-      #法人名取得
+#--- 現在のタブを閉じて、元のタブに戻る ---
+def to_originaltab(driver,original_tab):
+      driver.close()
+      driver.switch_to.window(original_tab)
+
+#--- 法人情報抽出 ---
+def get_data_houjin(driver,data_houdei):
       houjin = driver.find_element(By.XPATH,"//tr[td[text()='法人等の名称']]/td[2]")
       data_houdei['法人名']=houjin.text
-      #事業所クリック
-      jigyousyo_locator =(By.ID,'tab2_title')
-      jigyousyo =WebDriverWait(driver,20).until(
-        EC.element_to_be_clickable(jigyousyo_locator)
-      )
-      jigyousyo.click()
-      #事業所情報抽出
-      WebDriverWait(driver, 10).until(
-          EC.visibility_of_all_elements_located((By.CLASS_NAME, 'content_employee'))
-      )
+
+#--- 事業所情報抽出 ---
+def get_data_jigyousyo(driver,data_houdei):
+      jigyousyo_data_locator =(By.CLASS_NAME, 'content_employee')
+      all_element(driver,jigyousyo_data_locator)
 
       jig_name=driver.find_element(By.XPATH,"//tr[td/font[text()='事業所の名称']]/td[2]")
       jig_tel=driver.find_element(By.XPATH,"//tr[td/font[text()='事業所の連絡先 電話番号']]/td[2]")
@@ -173,20 +154,187 @@ def get_data(driver):
       data_houdei['メール']=(jig_mail.text)
       data_houdei['電話']=(jig_tel.text)
       data_houdei['ホームページ']=(jig_url.text)
-      list_houdei.append(data_houdei)
 
-      #タブを閉じて、元のタブに戻る
-      driver.close()
-      driver.switch_to.window(original_tab)
+ #--- サービス一覧から放課後等デイサービスを選択 ---
+def select_service(driver):
+       #クリック可能な要素を取得してクリック
+      servece_locator =(By.ID,"service")
+      wait_and_click(driver,servece_locator)
+
+      #チェックボックスの要素を取得してクリック
+      houkago_locator =(By.ID,"SRVC65")
+      js_click(driver,houkago_locator)
+
+      #画面が完全に切り替わってから要素取得
+      title =(By.ID,"selectedServices")
+      text= "放課後等デイサービス"
+      kirikae(driver,title,text)
+
+#--- 表示方法を一覧から選択に変更 ---
+def change_display_to_list(driver):
+  itiran_locator =(By.ID,'list')
+  try:#条件に一致する事業所が見つからない場合
+    wait_and_click(driver,itiran_locator)  
+  except TimeoutException :
+    return False
+  return True
+
+#--- 各ページのデータ取得 ---
+def extract_data_from_page(driver,list_houdei):
+    itiranElements =(By.XPATH,"//div[@class='detaillinkforeach']/a")
+    itiranList =all_element(driver,itiranElements)
+    
+    for targetElement in itiranList:
+      data_houdei ={} 
+      
+      #事業所の選択
+      driver.execute_script("arguments[0].scrollIntoView(true);", targetElement)
+      #新しいタブで開き切り替える
+      original_tab =open_link_in_newtab(driver,targetElement)
+
+      #法人名取得
+      get_data_houjin(driver,data_houdei)
+      #事業所情報ページへ移動
+      jigyousyo_locator =(By.ID,'tab2_title')
+      wait_and_click(driver,jigyousyo_locator)
+      
+      #事業所情報抽出
+      get_data_jigyousyo(driver,data_houdei)
+
+      list_houdei.append(data_houdei)
+      to_originaltab(driver,original_tab)
+
+#--- 次のページへ移動 ---
+def go_next_page(driver):
+  nextpage_locator =(By.ID,'COP000101E22')
+  wait_and_click(driver,nextpage_locator)
+
+
+#--- 転記するデータを抽出する動作 ---
+def get_data(driver):
+  #サービス一覧から放課後等デイサービスを選択 
+  select_service(driver)
+  # 表示方法を一覧から選択に変更 
+  if change_display_to_list(driver)==False:
+     return
+  #一覧ページから各事業所選択
+  list_houdei =[]
+  totalpage =int(driver.find_element(By.ID,'totalpage').text)
+  for j in range(1,totalpage+1):
+    #ページが完全に切り替わってから要素を取得
+    pageElement =(By.ID,'currentpage')
+    text2=str(j)
+    kirikae(driver,pageElement,text2)
+    #各ページのデータ取得
+    extract_data_from_page(driver,list_houdei)
     #スクロールして次のページへ
     if j<(totalpage) :
-      nextpage_locator =(By.ID,'COP000101E22')
-      nextpage =WebDriverWait(driver,20).until(
-        EC.element_to_be_clickable(nextpage_locator)
-      )
-      nextpage.click()
-     
+      go_next_page(driver)
   return list_houdei
+# #--- 転記するデータを抽出する動作 ---
+# def get_data(driver):
+# #--- サービスを選択欄で放課後デイサービスにチェックを入れるブラウザ操作 ---
+#   #クリック可能な要素を取得してクリック
+#   servece_locator =(By.ID,"service")
+#   service =WebDriverWait(driver,20).until(
+#       EC.element_to_be_clickable(servece_locator)
+#   )
+#   service.click()
+
+#   #チェックボックスの要素を取得してクリック
+#   houkago_locator =(By.ID,"SRVC65")
+#   service1 =WebDriverWait(driver,30).until(
+#       EC.presence_of_element_located(houkago_locator)
+#   )
+#   driver.execute_script("arguments[0].scrollIntoView({ block: 'center' });",service1)##jsで直接dom操作しないと動かない
+#   driver.execute_script("arguments[0].click();",service1)
+
+#   #画面が完全に切り替わってから要素取得
+#   title =(By.ID,"selectedServices")
+#   WebDriverWait(driver,30).until(
+#     EC.text_to_be_present_in_element(title,"放課後等デイサービス")
+#   )
+# #--- 表示方法を一覧から選択に変更 ---
+#   itiran_locator =(By.ID,'list')
+#   try:#条件に一致する事業所が見つからない場合
+#     itiran=WebDriverWait(driver,20).until(
+#       EC.element_to_be_clickable(itiran_locator)#wait_and_click()
+#     )
+#     itiran.click()
+#   except TimeoutException :
+#     return
+  
+#   #--- 一覧
+#   list_houdei =[]
+#   totalpage =int(driver.find_element(By.ID,'totalpage').text)
+#   for j in range(1,totalpage+1):
+#     #ページが完全に切り替わってから要素を取得
+#     pageElement =(By.ID,'currentpage')
+#     WebDriverWait(driver,30).until(
+#       EC.text_to_be_present_in_element(pageElement,str(j))#kirikae
+#     )
+#     itiranElements =(By.XPATH,"//div[@class='detaillinkforeach']/a")
+#     itiranList =WebDriverWait(driver,20).until(
+#         EC.visibility_of_all_elements_located(itiranElements)
+#       )
+#     itiranlength =len(itiranList)
+#     for i in range(itiranlength):
+#       data_houdei ={} 
+#       targetElement =itiranList[i]
+#       WebDriverWait(driver,20).until(
+#         EC.element_to_be_clickable(targetElement)#wait_and_click()
+#       )
+#       #前タブ情報取得
+#       original_tab =driver.current_window_handle
+#       initial_tabs =driver.window_handles
+#       #urlを新しいタブで開く
+#       driver.execute_script("window.open(arguments[0].href,'_blank');",targetElement)
+
+#       #後タブを取得
+#       current_tabs =driver.window_handles
+#       #新しいタブの取得移動
+#       set_initial_tabs = set(initial_tabs)
+#       set_current_tabs = set(current_tabs)
+#       new_set= set_current_tabs-set_initial_tabs
+#       new_tab = new_set.pop()
+#       driver.switch_to.window(new_tab)
+
+#       #法人名取得
+#       houjin = driver.find_element(By.XPATH,"//tr[td[text()='法人等の名称']]/td[2]")
+#       data_houdei['法人名']=houjin.text
+#       #事業所クリック
+#       jigyousyo_locator =(By.ID,'tab2_title')
+#       jigyousyo =WebDriverWait(driver,20).until(
+#         EC.element_to_be_clickable(jigyousyo_locator)#wait_and_click()
+#       )
+#       jigyousyo.click()
+#       #事業所情報抽出
+#       WebDriverWait(driver, 10).until(
+#           EC.visibility_of_all_elements_located((By.CLASS_NAME, 'content_employee'))
+#       )
+
+#       jig_name=driver.find_element(By.XPATH,"//tr[td/font[text()='事業所の名称']]/td[2]")
+#       jig_tel=driver.find_element(By.XPATH,"//tr[td/font[text()='事業所の連絡先 電話番号']]/td[2]")
+#       jig_mail=driver.find_element(By.XPATH,"//tr[td/font[text()='事業所の連絡先 電子メールアドレス']]/td[2]")
+#       jig_url=driver.find_element(By.XPATH,"//tr[td/font[text()='事業所の連絡先 ホームページ']]/td[2]")
+#       data_houdei['事業所名']=(jig_name.text)
+#       data_houdei['メール']=(jig_mail.text)
+#       data_houdei['電話']=(jig_tel.text)
+#       data_houdei['ホームページ']=(jig_url.text)
+#       list_houdei.append(data_houdei)
+
+#       #タブを閉じて、元のタブに戻る
+#       driver.close()
+#       driver.switch_to.window(original_tab)
+#     #スクロールして次のページへ
+#     if j<(totalpage) :
+#       nextpage_locator =(By.ID,'COP000101E22')
+#       nextpage =WebDriverWait(driver,20).until(
+#         EC.element_to_be_clickable(nextpage_locator)#wait_and_click()
+#       )
+#       nextpage.click()
+     
+#   return list_houdei
 
 #--- エクセル書き込み処理 ---
 def  write_to_excel(wb_path,df_houdei,sheet_name):
