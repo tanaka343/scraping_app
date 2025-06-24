@@ -62,7 +62,7 @@ def get_site():#サイトへ
   return driver
 
 #--- 地域を選択するブラウザ操作 ---
-def select_tikiki(driver,todou,siku):
+def select_todou(driver,todou):
   try:
     todou_locator = (By.XPATH,f"//a[text()='{todou}']")
     todou_a =WebDriverWait(driver,10).until(
@@ -75,6 +75,7 @@ def select_tikiki(driver,todou,siku):
     sys.exit(1)
   
   #市区町村
+def select_siku(driver,siku):
   try:
     siku_locator = (By.XPATH,f"//a[@title='{siku}']")
     siku_a =WebDriverWait(driver, 10).until(
@@ -231,6 +232,8 @@ def get_data(driver):
     if j<(totalpage) :
       go_next_page(driver)
   return list_houdei
+
+
 # #--- 転記するデータを抽出する動作 ---
 # def get_data(driver):
 # #--- サービスを選択欄で放課後デイサービスにチェックを入れるブラウザ操作 ---
@@ -366,55 +369,50 @@ reigai={
   
 }
 
-#--- 実行 ---
-tyouhuku1='神奈川県相模原市'
-tyouhuku2='大阪府堺市'
+tyouhuku=['神奈川県相模原市','大阪府堺市']
 
-S,row_path =get_user_input()
-todou,siku =format_input_data(S)
-if S in reigai:
+#--- 同じ県内で区の名前が重複している2番目の地域の処理 ---
+def select_tiiki_reigai_tyouhuku(driver,todou,siku,ku):
+  select_todou(driver,todou)
+  siku_locator = (By.XPATH,f"//tr[th[text()='{siku}']]/following-sibling::tr/td/a[@title='{ku}']")
+  siku_a =WebDriverWait(driver, 10).until(
+        EC.element_to_be_clickable(siku_locator))
+  siku_a.click()
+
+#--- スクレイピング部分 ---
+def scrape_data(S,todou,siku):
   list_houdei=[]
-  for i in reigai[S]:
-    siku=i
+  if S in reigai:
+    for ku in reigai[S]:
+      driver =get_site()
+      if S in tyouhuku:
+        select_tiiki_reigai_tyouhuku(driver,todou,siku,ku)  
+      else:
+        select_todou(driver,todou)
+        select_siku(driver,ku)
+
+      ku_data = get_data(driver)
+      list_houdei += ku_data
+      driver.quit()
+  else:
     driver =get_site()
-    if S==tyouhuku1:
-      todou_locator = (By.XPATH,f"//a[text()='{todou}']")
-      todou_a =WebDriverWait(driver,10).until(
-      EC.element_to_be_clickable(todou_locator)
-      )
-      todou_a.click()
-      
-      siku_locator = (By.XPATH,f"//tr[th[text()='相模原市']]/following-sibling::tr/td/a[@title='{i}']")
-      siku_a =WebDriverWait(driver, 10).until(
-            EC.element_to_be_clickable(siku_locator))
-      siku_a.click()
-    elif S==tyouhuku2:
-      todou_locator = (By.XPATH,f"//a[text()='{todou}']")
-      todou_a =WebDriverWait(driver,10).until(
-      EC.element_to_be_clickable(todou_locator)
-      )
-      todou_a.click()
-      
-      siku_locator = (By.XPATH,f"//tr[th[text()='堺市']]/following-sibling::tr/td/a[@title='{i}']")
-      siku_a =WebDriverWait(driver, 10).until(
-            EC.element_to_be_clickable(siku_locator))
-      siku_a.click()
-      
-    else:
-      select_tikiki(driver,todou,siku)
-    ku_data = get_data(driver)
-    list_houdei += ku_data
-    driver.quit()
-else:
-  driver =get_site()
-  select_tikiki(driver,todou,siku)
-  list_houdei = get_data(driver)
-  driver.quit()
+    select_todou(driver,todou)
+    select_siku(driver,siku)
+    list_houdei = get_data(driver)
+    driver.quit() 
+  return list_houdei
 
-df_houdei = pd.DataFrame(list_houdei) 
-wb_path,sheet_name =create_excelsheet(row_path,siku)   
-write_to_excel(wb_path,df_houdei,sheet_name)
+#--- 実行 ---
+def main():
+  S,row_path =get_user_input()
+  todou,siku =format_input_data(S)
+  list_houdei =scrape_data(S,todou,siku)
+  df_houdei = pd.DataFrame(list_houdei) 
+  # wb_path,sheet_name =create_excelsheet(row_path,siku)   
+  # write_to_excel(wb_path,df_houdei,sheet_name)
 
+  print(df_houdei)
+  print(f"\033[0m\033[32m\033[1m処理が正常に完了しました。\033[0m")
 
-print(df_houdei)
-print(f"\033[0m\033[32m\033[1m処理が正常に完了しました。\033[0m")
+if __name__ == "__main__":
+   main()
