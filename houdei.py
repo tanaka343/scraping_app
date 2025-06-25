@@ -1,4 +1,4 @@
-###完成版
+
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
@@ -12,18 +12,37 @@ import openpyxl
 import re
 import sys 
 from pathlib import Path
+from selenium.webdriver.remote.webelement import WebElement
 
-#--- 入力処理部分 ---
-def get_user_input():
+def get_user_input() -> tuple[str,str]: 
+  """ユーザーから地域とフォルダパスを取得する"""
   S=input('地域を入力 例）東京都豊島区 ')
   row_path=input('excelファイルパスを入力').strip().replace('"','')
   return S,row_path
 
-#--- 入力された文字を整形 ---
-def format_input_data(S):
+def format_input_data(S) -> tuple[str,str]:
+  """
+  都道府県名と市区町村名を取得する
+
+  Parameters:
+    S (str): ユーザーが入力した文字列
+
+  Returns:
+    tuple[str,str]: 都道府県名と市区町村名のタプル
+          例:
+            - '東京都豊島区' -> ('東京','豊島区')
+            - '北海道札幌市' -> ('北海道','札幌市')
+            - '京都府京都市' -> ('京都','京都市')
+
+  Note:
+    北海道は、都道府県名の接尾辞を除外しない文字列を取得したいため、
+    京都府は、都道府県名に複数の接尾辞（例: 都・府）が含まれるため、
+    正規表現 split ではなく個別に処理しています。
+    例: '京都府京都市' は re.split(r'都|府|県', ...) を使うと分割数が不正になりエラーが出る
+  """
   try:
     match=re.search(r'北海道(.*)',S)
-    match2=re.search(r'京都府(.*)',S)##都府両方入っていてエラーがでるため
+    match2=re.search(r'京都府(.*)',S)
     if match:
       todou='北海道'
       siku= match.group(1)
@@ -37,8 +56,22 @@ def format_input_data(S):
       print('入力形式が正しくありません。')
       sys.exit(1)
 
-#-- Excelシート準備 ---
-def create_excelsheet(row_path,siku):
+def create_excelsheet(row_path:str,siku:str) -> tuple[str,str]:
+  """
+  Excelシートのテンプレートをコピーしてシート名をsikuにする
+
+  Parameters:
+    row_path (str): ユーザーが入力したExcelのパス
+    siku (str): 市区町村名
+
+  Returns:
+    tuple[str,str]: 加工したExcelのパスとシート名
+
+  Note:
+    既存のシート名が入力された場合Excelが自動的にsheet_name,sheet_name1,sheet_name2と
+    割り当てるため、copy_sheet.titleにsikuを代入した後
+    sheet_nameにcopy_sheet.titleを代入することで、実際に割り当てられたsheet_nameを取得している
+  """
   try: 
     wb_path =Path(row_path)
     wb =openpyxl.load_workbook(wb_path)
@@ -52,8 +85,8 @@ def create_excelsheet(row_path,siku):
     print('excelファイルを閉じてください。')
     sys.exit(1)
 
-#---  サイトへ接続　---
-def get_site():#サイトへ
+def get_site() -> webdriver.Chrome:
+  """chromeドライバーを開き対象ページを開く"""
   options = Options()
   options.add_experimental_option("detach", True)
   driver = webdriver.Chrome(options=options)
@@ -61,8 +94,8 @@ def get_site():#サイトへ
   "https://www.wam.go.jp/sfkohyoout/COP000100E0000.do")
   return driver
 
-#--- 地域を選択するブラウザ操作 ---
-def select_todou(driver,todou):
+def select_todou(driver:webdriver.Chrome,todou:str) -> None:
+  """都道府県の選択操作を行う"""
   try:
     todou_locator = (By.XPATH,f"//a[text()='{todou}']")
     todou_a =WebDriverWait(driver,10).until(
@@ -74,8 +107,8 @@ def select_todou(driver,todou):
     driver.close()
     sys.exit(1)
   
-  #市区町村
-def select_siku(driver,siku):
+def select_siku(driver:webdriver.Chrome,siku:str) -> None:
+  """市町村の選択操作を行う"""
   try:
     siku_locator = (By.XPATH,f"//a[@title='{siku}']")
     siku_a =WebDriverWait(driver, 10).until(
@@ -86,75 +119,79 @@ def select_siku(driver,siku):
     driver.close()
     sys.exit(1)
 
-#--- クリック可能になるまで待機、要素を取得してクリック ---
-def wait_and_click(driver,locator):
+def wait_and_click(driver:webdriver.Chrome,locator:str) -> None:
+  """クリック可能になるまで待機、要素を取得してクリック"""
   element =WebDriverWait(driver,20).until(
     EC.element_to_be_clickable(locator)
   )
   element.click()
 
-#--- 画面が完全に切り替わるまで待機 ---
-def kirikae(driver,locator,text):
+def kirikae(driver:webdriver.Chrome,locator:tuple[str,str],text:str) -> None:
+  """
+  画面が完全に切り替わるまで待機する
+  
+  """
   WebDriverWait(driver,30).until(
     EC.text_to_be_present_in_element(locator,text)
   )
 
 #--- すべての要素が表示されるまで待機 ---
-def all_element(driver,locator):
+def all_element(driver:webdriver.Chrome,locator:tuple[str,str]) -> list[WebElement]:
+  """すべての要素が表示されるまで待機して要素を取得"""
   elements =WebDriverWait(driver,20).until(
         EC.visibility_of_all_elements_located(locator)
       )
   return elements
 
-#--- jsでしか操作できない部分のクリック ---
-def js_click(driver,locator):
+def js_click(driver:webdriver.Chrome,locator:tuple[str,str]) -> None:
+  """ jsでしか操作できない部分をクリック"""
   element =WebDriverWait(driver,30).until(
       EC.presence_of_element_located(locator)
   )
   driver.execute_script("arguments[0].scrollIntoView({ block: 'center' });",element)
   driver.execute_script("arguments[0].click();",element)
 
-#--- リンクを新しいタブで開き、そちらに切り替える ---
-def open_link_in_newtab(driver,element):
+def open_link_in_newtab(driver:webdriver.Chrome,element:WebElement) -> str:
+  """リンクを新しいタブで開き、そちらに切り替える"""    
   #前タブ情報取得
-      original_tab =driver.current_window_handle
-      initial_tabs =driver.window_handles
-      #urlを新しいタブで開く
-      driver.execute_script("window.open(arguments[0].href,'_blank');",element)
+  original_tab =driver.current_window_handle
+  initial_tabs =driver.window_handles
+  #urlを新しいタブで開く
+  driver.execute_script("window.open(arguments[0].href,'_blank');",element)
 
-      #後タブを取得
-      current_tabs =driver.window_handles
-      #新しいタブの取得移動
-      set_initial_tabs = set(initial_tabs)
-      set_current_tabs = set(current_tabs)
-      new_set= set_current_tabs-set_initial_tabs
-      new_tab = new_set.pop()
-      driver.switch_to.window(new_tab)
-      return original_tab
+  #後タブを取得
+  current_tabs =driver.window_handles
+  #新しいタブの取得移動
+  set_initial_tabs = set(initial_tabs)
+  set_current_tabs = set(current_tabs)
+  new_set= set_current_tabs-set_initial_tabs
+  new_tab = new_set.pop()
+  driver.switch_to.window(new_tab)
+  return original_tab
 
-#--- 現在のタブを閉じて、元のタブに戻る ---
-def to_originaltab(driver,original_tab):
-      driver.close()
-      driver.switch_to.window(original_tab)
+def to_originaltab(driver:webdriver.Chrome,original_tab:str) -> None:
+  """現在のタブを閉じて、元のタブに戻る"""
+  driver.close()
+  driver.switch_to.window(original_tab)
 
-#--- 法人情報抽出 ---
-def get_data_houjin(driver,data_houdei):
-      houjin = driver.find_element(By.XPATH,"//tr[td[text()='法人等の名称']]/td[2]")
-      data_houdei['法人名']=houjin.text
+def get_data_houjin(driver:webdriver.Chrome,data_houdei:dict[str,str]) -> None:
+  """法人名を抽出して辞書に挿入"""
+  houjin = driver.find_element(By.XPATH,"//tr[td[text()='法人等の名称']]/td[2]")
+  data_houdei['法人名']=houjin.text
 
 #--- 事業所情報抽出 ---
 def get_data_jigyousyo(driver,data_houdei):
-      jigyousyo_data_locator =(By.CLASS_NAME, 'content_employee')
-      all_element(driver,jigyousyo_data_locator)
+  jigyousyo_data_locator =(By.CLASS_NAME, 'content_employee')
+  all_element(driver,jigyousyo_data_locator)
 
-      jig_name=driver.find_element(By.XPATH,"//tr[td/font[text()='事業所の名称']]/td[2]")
-      jig_tel=driver.find_element(By.XPATH,"//tr[td/font[text()='事業所の連絡先 電話番号']]/td[2]")
-      jig_mail=driver.find_element(By.XPATH,"//tr[td/font[text()='事業所の連絡先 電子メールアドレス']]/td[2]")
-      jig_url=driver.find_element(By.XPATH,"//tr[td/font[text()='事業所の連絡先 ホームページ']]/td[2]")
-      data_houdei['事業所名']=(jig_name.text)
-      data_houdei['メール']=(jig_mail.text)
-      data_houdei['電話']=(jig_tel.text)
-      data_houdei['ホームページ']=(jig_url.text)
+  jig_name=driver.find_element(By.XPATH,"//tr[td/font[text()='事業所の名称']]/td[2]")
+  jig_tel=driver.find_element(By.XPATH,"//tr[td/font[text()='事業所の連絡先 電話番号']]/td[2]")
+  jig_mail=driver.find_element(By.XPATH,"//tr[td/font[text()='事業所の連絡先 電子メールアドレス']]/td[2]")
+  jig_url=driver.find_element(By.XPATH,"//tr[td/font[text()='事業所の連絡先 ホームページ']]/td[2]")
+  data_houdei['事業所名']=(jig_name.text)
+  data_houdei['メール']=(jig_mail.text)
+  data_houdei['電話']=(jig_tel.text)
+  data_houdei['ホームページ']=(jig_url.text)
 
  #--- サービス一覧から放課後等デイサービスを選択 ---
 def select_service(driver):
@@ -233,111 +270,6 @@ def get_data(driver):
       go_next_page(driver)
   return list_houdei
 
-
-# #--- 転記するデータを抽出する動作 ---
-# def get_data(driver):
-# #--- サービスを選択欄で放課後デイサービスにチェックを入れるブラウザ操作 ---
-#   #クリック可能な要素を取得してクリック
-#   servece_locator =(By.ID,"service")
-#   service =WebDriverWait(driver,20).until(
-#       EC.element_to_be_clickable(servece_locator)
-#   )
-#   service.click()
-
-#   #チェックボックスの要素を取得してクリック
-#   houkago_locator =(By.ID,"SRVC65")
-#   service1 =WebDriverWait(driver,30).until(
-#       EC.presence_of_element_located(houkago_locator)
-#   )
-#   driver.execute_script("arguments[0].scrollIntoView({ block: 'center' });",service1)##jsで直接dom操作しないと動かない
-#   driver.execute_script("arguments[0].click();",service1)
-
-#   #画面が完全に切り替わってから要素取得
-#   title =(By.ID,"selectedServices")
-#   WebDriverWait(driver,30).until(
-#     EC.text_to_be_present_in_element(title,"放課後等デイサービス")
-#   )
-# #--- 表示方法を一覧から選択に変更 ---
-#   itiran_locator =(By.ID,'list')
-#   try:#条件に一致する事業所が見つからない場合
-#     itiran=WebDriverWait(driver,20).until(
-#       EC.element_to_be_clickable(itiran_locator)#wait_and_click()
-#     )
-#     itiran.click()
-#   except TimeoutException :
-#     return
-  
-#   #--- 一覧
-#   list_houdei =[]
-#   totalpage =int(driver.find_element(By.ID,'totalpage').text)
-#   for j in range(1,totalpage+1):
-#     #ページが完全に切り替わってから要素を取得
-#     pageElement =(By.ID,'currentpage')
-#     WebDriverWait(driver,30).until(
-#       EC.text_to_be_present_in_element(pageElement,str(j))#kirikae
-#     )
-#     itiranElements =(By.XPATH,"//div[@class='detaillinkforeach']/a")
-#     itiranList =WebDriverWait(driver,20).until(
-#         EC.visibility_of_all_elements_located(itiranElements)
-#       )
-#     itiranlength =len(itiranList)
-#     for i in range(itiranlength):
-#       data_houdei ={} 
-#       targetElement =itiranList[i]
-#       WebDriverWait(driver,20).until(
-#         EC.element_to_be_clickable(targetElement)#wait_and_click()
-#       )
-#       #前タブ情報取得
-#       original_tab =driver.current_window_handle
-#       initial_tabs =driver.window_handles
-#       #urlを新しいタブで開く
-#       driver.execute_script("window.open(arguments[0].href,'_blank');",targetElement)
-
-#       #後タブを取得
-#       current_tabs =driver.window_handles
-#       #新しいタブの取得移動
-#       set_initial_tabs = set(initial_tabs)
-#       set_current_tabs = set(current_tabs)
-#       new_set= set_current_tabs-set_initial_tabs
-#       new_tab = new_set.pop()
-#       driver.switch_to.window(new_tab)
-
-#       #法人名取得
-#       houjin = driver.find_element(By.XPATH,"//tr[td[text()='法人等の名称']]/td[2]")
-#       data_houdei['法人名']=houjin.text
-#       #事業所クリック
-#       jigyousyo_locator =(By.ID,'tab2_title')
-#       jigyousyo =WebDriverWait(driver,20).until(
-#         EC.element_to_be_clickable(jigyousyo_locator)#wait_and_click()
-#       )
-#       jigyousyo.click()
-#       #事業所情報抽出
-#       WebDriverWait(driver, 10).until(
-#           EC.visibility_of_all_elements_located((By.CLASS_NAME, 'content_employee'))
-#       )
-
-#       jig_name=driver.find_element(By.XPATH,"//tr[td/font[text()='事業所の名称']]/td[2]")
-#       jig_tel=driver.find_element(By.XPATH,"//tr[td/font[text()='事業所の連絡先 電話番号']]/td[2]")
-#       jig_mail=driver.find_element(By.XPATH,"//tr[td/font[text()='事業所の連絡先 電子メールアドレス']]/td[2]")
-#       jig_url=driver.find_element(By.XPATH,"//tr[td/font[text()='事業所の連絡先 ホームページ']]/td[2]")
-#       data_houdei['事業所名']=(jig_name.text)
-#       data_houdei['メール']=(jig_mail.text)
-#       data_houdei['電話']=(jig_tel.text)
-#       data_houdei['ホームページ']=(jig_url.text)
-#       list_houdei.append(data_houdei)
-
-#       #タブを閉じて、元のタブに戻る
-#       driver.close()
-#       driver.switch_to.window(original_tab)
-#     #スクロールして次のページへ
-#     if j<(totalpage) :
-#       nextpage_locator =(By.ID,'COP000101E22')
-#       nextpage =WebDriverWait(driver,20).until(
-#         EC.element_to_be_clickable(nextpage_locator)#wait_and_click()
-#       )
-#       nextpage.click()
-     
-#   return list_houdei
 
 #--- エクセル書き込み処理 ---
 def  write_to_excel(wb_path,df_houdei,sheet_name):
