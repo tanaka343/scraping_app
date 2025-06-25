@@ -179,8 +179,8 @@ def get_data_houjin(driver:webdriver.Chrome,data_houdei:dict[str,str]) -> None:
   houjin = driver.find_element(By.XPATH,"//tr[td[text()='法人等の名称']]/td[2]")
   data_houdei['法人名']=houjin.text
 
-#--- 事業所情報抽出 ---
-def get_data_jigyousyo(driver,data_houdei):
+def get_data_jigyousyo(driver:webdriver.Chrome,data_houdei:dict[str,str]) -> None:
+  """事業所の名称、電話番号、メールアドレス、ホームページを抽出して辞書に挿入"""
   jigyousyo_data_locator =(By.CLASS_NAME, 'content_employee')
   all_element(driver,jigyousyo_data_locator)
 
@@ -193,23 +193,23 @@ def get_data_jigyousyo(driver,data_houdei):
   data_houdei['電話']=(jig_tel.text)
   data_houdei['ホームページ']=(jig_url.text)
 
- #--- サービス一覧から放課後等デイサービスを選択 ---
-def select_service(driver):
-       #クリック可能な要素を取得してクリック
-      servece_locator =(By.ID,"service")
-      wait_and_click(driver,servece_locator)
+def select_service(driver:webdriver.Chrome) -> None:
+  """サービス一覧から放課後等デイサービスを選択するブラウザ操作"""
+    #クリック可能な要素を取得してクリック
+  servece_locator =(By.ID,"service")
+  wait_and_click(driver,servece_locator)
 
-      #チェックボックスの要素を取得してクリック
-      houkago_locator =(By.ID,"SRVC65")
-      js_click(driver,houkago_locator)
+  #チェックボックスの要素を取得してクリック
+  houkago_locator =(By.ID,"SRVC65")
+  js_click(driver,houkago_locator)
 
-      #画面が完全に切り替わってから要素取得
-      title =(By.ID,"selectedServices")
-      text= "放課後等デイサービス"
-      kirikae(driver,title,text)
+  #画面が完全に切り替わってから要素取得
+  title =(By.ID,"selectedServices")
+  text= "放課後等デイサービス"
+  kirikae(driver,title,text)
 
-#--- 表示方法を一覧から選択に変更 ---
-def change_display_to_list(driver):
+def change_display_to_list(driver:webdriver.Chrome) -> None:
+  """表示形式を『一覧から選択』に変更するブラウザ操作"""
   itiran_locator =(By.ID,'list')
   try:#条件に一致する事業所が見つからない場合
     wait_and_click(driver,itiran_locator)  
@@ -217,39 +217,39 @@ def change_display_to_list(driver):
     return False
   return True
 
-#--- 各ページのデータ取得 ---
-def extract_data_from_page(driver,list_houdei):
-    itiranElements =(By.XPATH,"//div[@class='detaillinkforeach']/a")
-    itiranList =all_element(driver,itiranElements)
+def extract_data_from_page(driver:webdriver.Chrome,list_houdei:list[dict[str,str]]) -> None:
+  """施設ごとに新しいタブで開きデータ抽出、タブを閉じて元のタブに戻る"""
+  itiranElements =(By.XPATH,"//div[@class='detaillinkforeach']/a")
+  itiranList =all_element(driver,itiranElements)
+  
+  for targetElement in itiranList:
+    data_houdei ={} 
     
-    for targetElement in itiranList:
-      data_houdei ={} 
-      
-      #事業所の選択
-      driver.execute_script("arguments[0].scrollIntoView(true);", targetElement)
-      #新しいタブで開き切り替える
-      original_tab =open_link_in_newtab(driver,targetElement)
+    #事業所の選択
+    driver.execute_script("arguments[0].scrollIntoView(true);", targetElement)
+    #新しいタブで開き切り替える
+    original_tab =open_link_in_newtab(driver,targetElement)
 
-      #法人名取得
-      get_data_houjin(driver,data_houdei)
-      #事業所情報ページへ移動
-      jigyousyo_locator =(By.ID,'tab2_title')
-      wait_and_click(driver,jigyousyo_locator)
-      
-      #事業所情報抽出
-      get_data_jigyousyo(driver,data_houdei)
+    #法人名取得
+    get_data_houjin(driver,data_houdei)
+    #事業所情報ページへ移動
+    jigyousyo_locator =(By.ID,'tab2_title')
+    wait_and_click(driver,jigyousyo_locator)
+    
+    #事業所情報抽出
+    get_data_jigyousyo(driver,data_houdei)
 
-      list_houdei.append(data_houdei)
-      to_originaltab(driver,original_tab)
+    list_houdei.append(data_houdei)
+    to_originaltab(driver,original_tab)
 
-#--- 次のページへ移動 ---
-def go_next_page(driver):
+
+def go_next_page(driver:webdriver.Chrome) -> None:
+  """次のページへ移動"""
   nextpage_locator =(By.ID,'COP000101E22')
   wait_and_click(driver,nextpage_locator)
 
-
-#--- 転記するデータを抽出する動作 ---
-def get_data(driver):
+def get_data(driver:webdriver.Chrome) -> list[dict[str,str]]:
+  """転記するデータを抽出してリストに保存"""
   #サービス一覧から放課後等デイサービスを選択 
   select_service(driver)
   # 表示方法を一覧から選択に変更 
@@ -271,8 +271,8 @@ def get_data(driver):
   return list_houdei
 
 
-#--- エクセル書き込み処理 ---
-def  write_to_excel(wb_path,df_houdei,sheet_name):
+def  write_to_excel(wb_path:str,df_houdei:pd.DataFrame,sheet_name:str) -> None:
+  """取得したデータを既存のExcelシートに書き込む"""
   with pd.ExcelWriter(wb_path,engine="openpyxl",mode="a",if_sheet_exists="overlay") as writer:
     df_houdei.to_excel(writer,sheet_name=sheet_name,startrow=1,startcol=0,header=False,index=False)
 
@@ -303,16 +303,16 @@ reigai={
 
 tyouhuku=['神奈川県相模原市','大阪府堺市']
 
-#--- 同じ県内で区の名前が重複している2番目の地域の処理 ---
-def select_tiiki_reigai_tyouhuku(driver,todou,siku,ku):
+def select_tiiki_reigai_tyouhuku(driver:webdriver.Chrome,todou:str,siku:str,ku:str) -> None:
+  """例外処理地域のなかで同じ県内で区の名前が重複している2番目の地域の選択 """
   select_todou(driver,todou)
   siku_locator = (By.XPATH,f"//tr[th[text()='{siku}']]/following-sibling::tr/td/a[@title='{ku}']")
   siku_a =WebDriverWait(driver, 10).until(
         EC.element_to_be_clickable(siku_locator))
   siku_a.click()
 
-#--- スクレイピング部分 ---
-def scrape_data(S,todou,siku):
+def scrape_data(S:str,todou:str,siku:str) -> list[dict[str,str]]:
+  """指定された地域に対してスクレイピングを実行し、情報を抽出して返す"""
   list_houdei=[]
   if S in reigai:
     for ku in reigai[S]:
@@ -334,14 +334,14 @@ def scrape_data(S,todou,siku):
     driver.quit() 
   return list_houdei
 
-#--- 実行 ---
 def main():
+  """全体の処理を実行する関数"""
   S,row_path =get_user_input()
   todou,siku =format_input_data(S)
   list_houdei =scrape_data(S,todou,siku)
   df_houdei = pd.DataFrame(list_houdei) 
-  # wb_path,sheet_name =create_excelsheet(row_path,siku)   
-  # write_to_excel(wb_path,df_houdei,sheet_name)
+  wb_path,sheet_name =create_excelsheet(row_path,siku)   
+  write_to_excel(wb_path,df_houdei,sheet_name)
 
   print(df_houdei)
   print(f"\033[0m\033[32m\033[1m処理が正常に完了しました。\033[0m")
