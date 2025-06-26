@@ -38,7 +38,7 @@ def format_input_data(S) -> tuple[str,str]:
     北海道は、都道府県名の接尾辞を除外しない文字列を取得したいため、
     京都府は、都道府県名に複数の接尾辞（例: 都・府）が含まれるため、
     正規表現 split ではなく個別に処理しています。
-    例: '京都府京都市' は re.split(r'都|府|県', ...) を使うと分割数が不正になりエラーが出る
+    例: '京都府京都市' は re.split(r'都|府|県', ...) を使うと分割数が不正になりエラーが出ます。
   """
   try:
     match=re.search(r'北海道(.*)',S)
@@ -70,7 +70,7 @@ def create_excelsheet(row_path:str,siku:str) -> tuple[str,str]:
   Note:
     既存のシート名が入力された場合Excelが自動的にsheet_name,sheet_name1,sheet_name2と
     割り当てるため、copy_sheet.titleにsikuを代入した後
-    sheet_nameにcopy_sheet.titleを代入することで、実際に割り当てられたsheet_nameを取得している
+    sheet_nameにcopy_sheet.titleを代入することで、実際に割り当てられたsheet_nameを取得しています。
   """
   try: 
     wb_path =Path(row_path)
@@ -129,13 +129,22 @@ def wait_and_click(driver:webdriver.Chrome,locator:str) -> None:
 def kirikae(driver:webdriver.Chrome,locator:tuple[str,str],text:str) -> None:
   """
   画面が完全に切り替わるまで待機する
-  
+
+  Parameters:
+    driver (webdriver.Chrome): SeleniumのWebDriver.Chromeオブジェクト
+    locator (tuple[str,str]): Byクラスとセレクタ文字列のタプル (例: (By.CLASS_NAME, 'my-class'))
+    text (str): 画面切り替え後に表示される文字列
+
+  Returns: None
+
+  Note:
+    画面が完全に切り替わる前に要素を取得してしまうことを防ぐために、
+    画面切り替え後にブラウザ上に表示されるはずのテキストが現れるまで待機しています。
   """
   WebDriverWait(driver,30).until(
     EC.text_to_be_present_in_element(locator,text)
   )
 
-#--- すべての要素が表示されるまで待機 ---
 def all_element(driver:webdriver.Chrome,locator:tuple[str,str]) -> list[WebElement]:
   """すべての要素が表示されるまで待機して要素を取得"""
   elements =WebDriverWait(driver,20).until(
@@ -144,7 +153,19 @@ def all_element(driver:webdriver.Chrome,locator:tuple[str,str]) -> list[WebEleme
   return elements
 
 def js_click(driver:webdriver.Chrome,locator:tuple[str,str]) -> None:
-  """ jsでしか操作できない部分をクリック"""
+  """ 
+  jsでしか操作できない部分をクリック
+
+  Parameters:
+    driver (webdriver.Chrome): SeleniumのWebDriver.Chromeオブジェクト
+    locator (tuple[str,str]): Byクラスとセレクタ文字列のタプル (例: (By.CLASS_NAME, 'my-class'))
+
+  Returns: None
+
+  Note:
+    ドロップダウンメニュー内のチェックボックスをクリックする動作がSeleniumのブラウザ操作では実行できなかったため、
+    javascriptで直接クリックしています。
+  """
   element =WebDriverWait(driver,30).until(
       EC.presence_of_element_located(locator)
   )
@@ -174,13 +195,32 @@ def to_originaltab(driver:webdriver.Chrome,original_tab:str) -> None:
   driver.close()
   driver.switch_to.window(original_tab)
 
-def get_data_houjin(driver:webdriver.Chrome,data_houdei:dict[str,str]) -> None:
-  """法人名を抽出して辞書に挿入"""
+def get_data_houjin(driver:webdriver.Chrome,data_houdei:dict[str,str]) -> dict[str,str]:
+  """
+  法人名を抽出して引数の辞書に追加して返す
+  
+  Parameters:
+    driver (webdriver.Chrome): SeleniumのWebDriver.Chromeオブジェクト
+    data_houdei (dict[str,str]): 各施設情報を格納する辞書（更新される） 
+    
+  Returns: 
+    data_houdei (dict[str,str]): 引数data_houdeiに取得した法人名を追加した辞書 (例: {'法人名':'株式会社ぴあサポート'})
+  """
   houjin = driver.find_element(By.XPATH,"//tr[td[text()='法人等の名称']]/td[2]")
   data_houdei['法人名']=houjin.text
 
-def get_data_jigyousyo(driver:webdriver.Chrome,data_houdei:dict[str,str]) -> None:
-  """事業所の名称、電話番号、メールアドレス、ホームページを抽出して辞書に挿入"""
+def get_data_jigyousyo(driver:webdriver.Chrome,data_houdei:dict[str,str]) -> dict[str,str]:
+  """
+  事業所の名称、電話番号、メールアドレス、ホームページを抽出して引数の辞書に追加して返す
+
+   Parameters:
+    driver (webdriver.Chrome): SeleniumのWebDriver.Chromeオブジェクト
+    data_houdei (dict[str,str]): 各施設情報を格納する辞書（更新される）
+    
+  Returns: 
+    data_houdei (dict[str,str]): 引数data_houdeiに取得した事業所情報を追加した辞書
+    (例: {'法人名':'株式会社ぴあサポート','事業所名':'オリーブ','メール':'pia-olive@gui.ne.jp','電話':'072-275-9466','ホームページ':'http://www.pia-olive'})
+  """
   jigyousyo_data_locator =(By.CLASS_NAME, 'content_employee')
   all_element(driver,jigyousyo_data_locator)
 
@@ -208,8 +248,20 @@ def select_service(driver:webdriver.Chrome) -> None:
   text= "放課後等デイサービス"
   kirikae(driver,title,text)
 
-def change_display_to_list(driver:webdriver.Chrome) -> None:
-  """表示形式を『一覧から選択』に変更するブラウザ操作"""
+def change_display_to_list(driver:webdriver.Chrome) -> bool:
+  """
+  表示形式を『一覧から選択』に変更するブラウザ操作
+
+  Parameters:
+    driver (webdriver.Chrome): SeleniumのWebDriver.Chromeオブジェクト
+    
+  Returns: 
+    bool : 処理成功でTrue、表示件数0件でFalse
+
+  Note:
+    施設の検索結果が0件の時は、itiran_locatorが見つからずTimeoutExceptionエラーが発生するため
+    その場合はFalseを返してget_data()の条件分岐で処理を抜けるようにしています。
+  """
   itiran_locator =(By.ID,'list')
   try:#条件に一致する事業所が見つからない場合
     wait_and_click(driver,itiran_locator)  
@@ -217,8 +269,24 @@ def change_display_to_list(driver:webdriver.Chrome) -> None:
     return False
   return True
 
-def extract_data_from_page(driver:webdriver.Chrome,list_houdei:list[dict[str,str]]) -> None:
-  """施設ごとに新しいタブで開きデータ抽出、タブを閉じて元のタブに戻る"""
+def extract_data_from_page(driver:webdriver.Chrome,list_houdei:list[dict[str,str]]) -> list[dict[str,str]]:
+  """
+  施設一覧ページ1ページ分の施設情報をスクレイピングし、引数のリストに辞書形式で追加して返す
+
+  Parameters:
+    driver (webdriver.Chrome): SeleniumのWebDriver.Chromeオブジェクト
+    list_houdei (list[dict[str,str]]) : 各施設情報を格納する辞書のリスト（更新される）
+
+  Returns:
+    list_houdei (list[dict[str,str]]) :引数list_houdeiに取得した情報を追加したリスト
+
+  Note:
+    
+    -施設一覧ページのすべての施設が表示されるまで待機し、全施設リンク要素を取得
+    -各施設リンクを新しいタブで開き、施設情報を取得
+    -取得後は元のタブに戻り、各施設を順に読み込み
+   
+  """
   itiranElements =(By.XPATH,"//div[@class='detaillinkforeach']/a")
   itiranList =all_element(driver,itiranElements)
   
@@ -249,30 +317,52 @@ def go_next_page(driver:webdriver.Chrome) -> None:
   wait_and_click(driver,nextpage_locator)
 
 def get_data(driver:webdriver.Chrome) -> list[dict[str,str]]:
-  """転記するデータを抽出してリストに保存"""
-  #サービス一覧から放課後等デイサービスを選択 
+  """
+  複数ページにまたがる施設情報をスクレイピングし、辞書形式のリストとしてまとめて返す
+
+  Parameters:
+    driver (webdriver.Chrome): SeleniumのWebDriver.Chromeオブジェクト
+
+  Returns:
+    list_houdei (list[dict[str,str]]) : 各施設情報を格納した辞書のリスト
+    ※施設情報が0件の場合は空のリストを返します。
+     
+  Note:
+    -サービス一覧から放課後デイサービスを選択
+    -表示形式を「一覧から選択」に変更※0件の場合スキップ
+    -総ページ数を取得し、各ページを順に読み込み
+    -ページが切り替わってから、施設情報を抽出
+  """
   select_service(driver)
-  # 表示方法を一覧から選択に変更 
   if change_display_to_list(driver)==False:
-     return
-  #一覧ページから各事業所選択
+     return []
   list_houdei =[]
   totalpage =int(driver.find_element(By.ID,'totalpage').text)
   for j in range(1,totalpage+1):
-    #ページが完全に切り替わってから要素を取得
     pageElement =(By.ID,'currentpage')
     text2=str(j)
     kirikae(driver,pageElement,text2)
-    #各ページのデータ取得
     extract_data_from_page(driver,list_houdei)
-    #スクロールして次のページへ
     if j<(totalpage) :
       go_next_page(driver)
   return list_houdei
 
 
 def  write_to_excel(wb_path:str,df_houdei:pd.DataFrame,sheet_name:str) -> None:
-  """取得したデータを既存のExcelシートに書き込む"""
+  """
+  取得した施設情報データを既存のExcelファイルの指定シートに書き込む
+  
+  Parameters:
+    wb_path (str) : 加工済みExcelファイルのパス（create_excelsheet()で生成）
+    df_houdei (pd.DataFrame) : 施設情報を格納したデータフレーム
+    sheet_name (str) : 書き込み対象のシート名（変数siku）
+
+  Returns: None
+  
+  Note:
+    Excelファイルはopenpyxlを使用して追記している。
+    データは行１、列Ａから書き込みヘッダーとインデックスは書きこまない。
+  """
   with pd.ExcelWriter(wb_path,engine="openpyxl",mode="a",if_sheet_exists="overlay") as writer:
     df_houdei.to_excel(writer,sheet_name=sheet_name,startrow=1,startcol=0,header=False,index=False)
 
@@ -300,11 +390,29 @@ reigai={
   '熊本県熊本市': ['中央区', '東区', '西区', '南区', '北区'], 
   
 }
-
+#重複する区のリスト
 tyouhuku=['神奈川県相模原市','大阪府堺市']
 
 def select_tiiki_reigai_tyouhuku(driver:webdriver.Chrome,todou:str,siku:str,ku:str) -> None:
-  """例外処理地域のなかで同じ県内で区の名前が重複している2番目の地域の選択 """
+  """
+  例外的なdom構造の地域を選択するブラウザ操作
+
+  Parameters:
+    driver (webdriver.Chrome): SeleniumのWebDriver.Chromeオブジェクト
+    todou (str) : 都道府県名
+    siku (str) : 市町村名
+    ku (str) : 区の名前
+
+  Returns: None
+  
+  Note:
+    通常、都道府県 → 市町村 を選択するが、
+
+    一部政令指定都市などは、都道府県 → 区（市町村項目内）を選択する構造になっている
+
+    さらに、同一都道府県内に同名の区が複数存在する場合に単に区の名前で検索すると最初に見つかった方が選択されてしまう。
+    そのため、市町村名:sikuと、区の名前:kuの両方でリンクを特定し選択する
+  """
   select_todou(driver,todou)
   siku_locator = (By.XPATH,f"//tr[th[text()='{siku}']]/following-sibling::tr/td/a[@title='{ku}']")
   siku_a =WebDriverWait(driver, 10).until(
@@ -312,7 +420,9 @@ def select_tiiki_reigai_tyouhuku(driver:webdriver.Chrome,todou:str,siku:str,ku:s
   siku_a.click()
 
 def scrape_data(S:str,todou:str,siku:str) -> list[dict[str,str]]:
-  """指定された地域に対してスクレイピングを実行し、情報を抽出して返す"""
+  """
+  指定された地域に対してスクレイピングを実行し、情報を抽出して返す
+  """
   list_houdei=[]
   if S in reigai:
     for ku in reigai[S]:
