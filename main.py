@@ -11,7 +11,7 @@ from pathlib import Path
 from selenium.webdriver.remote.webelement import WebElement
 from utils.input_handlers import get_user_input,format_input_data
 from utils.data_extractors import scrape_data
-
+from results.output import create_excelsheet,write_to_excel
 
 
 def main():
@@ -30,8 +30,8 @@ def main():
   todou,siku =format_input_data(S)
   list_houdei =scrape_data(S,todou,siku)
   df_houdei = pd.DataFrame(list_houdei) 
-  # wb_path,sheet_name =create_excelsheet(row_path,siku)   
-  # write_to_excel(wb_path,df_houdei,sheet_name)
+  wb_path,sheet_name =create_excelsheet(row_path,siku)   
+  write_to_excel(wb_path,df_houdei,sheet_name)
 
   print(df_houdei)
   print(f"\033[0m\033[32m\033[1m処理が正常に完了しました。\033[0m")
