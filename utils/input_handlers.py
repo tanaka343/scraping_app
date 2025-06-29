@@ -1,5 +1,5 @@
 import re
-import sys 
+
 
 def get_user_input() -> tuple[str,str]: 
   """ユーザーから地域とフォルダパスを取得する"""
@@ -27,18 +27,15 @@ def format_input_data(S) -> tuple[str,str]:
     正規表現 split ではなく個別に処理しています。
     例: '京都府京都市' は re.split(r'都|府|県', ...) を使うと分割数が不正になりエラーが出ます。
   """
-  try:
-    match=re.search(r'北海道(.*)',S)
-    match2=re.search(r'京都府(.*)',S)
-    if match:
-      todou='北海道'
-      siku= match.group(1)
-    elif match2:
-      todou='京都'
-      siku=match2.group(1)
-    else:
-      todou,siku=re.split(r'都|府|県',S,maxsplit=2,flags=0)
-    return todou,siku
-  except ValueError:
-      print('入力形式が正しくありません。')
-      sys.exit(1)
+ 
+  match=re.search(r'北海道(.*)',S)
+  match2=re.search(r'京都府(.*)',S)
+  if match:
+    todou='北海道'
+    siku= match.group(1)
+  elif match2:
+    todou='京都'
+    siku=match2.group(1)
+  else:
+    todou,siku=re.split(r'都|府|県',S,maxsplit=2,flags=0)
+  return todou,siku

@@ -169,9 +169,8 @@ def select_todou(driver:webdriver.Chrome,todou:str) -> None:
     )
     todou_a.click()
   except TimeoutException:
-    print('都道府県名が正しくありません。')
-    driver.close()
-    sys.exit(1)
+    raise TimeoutException('都道府県名が正しくありません。')
+    
 
 def select_siku(driver:webdriver.Chrome,siku:str) -> None:
   """市町村の選択操作を行う"""
@@ -181,6 +180,5 @@ def select_siku(driver:webdriver.Chrome,siku:str) -> None:
             EC.element_to_be_clickable(siku_locator))
     siku_a.click()
   except TimeoutException:
-    print('市区町村名が正しくありません。')
-    driver.close()
-    sys.exit(1)
+    raise TimeoutException('市区町村名が正しくありません。')
+    

@@ -144,11 +144,12 @@ def get_data(driver:webdriver.Chrome) -> list[dict[str,str]]:
       go_next_page(driver)
   return list_houdei
 
-def scrape_data(S:str,todou:str,siku:str) -> list[dict[str,str]]:
+def scrape_data(driver:webdriver.Chrome,S:str,todou:str,siku:str) -> list[dict[str,str]]:
   """
   指定された地域に対してスクレイピングを実行し、辞書形式のリストとしてまとめて返す
 
   Parameters:
+    driver (webdriver.Chrome): SeleniumのWebDriver.Chromeオブジェクト
     S (str): ユーザーが入力した地域名
     todou (str) : 都道府県名
     siku (str) : 市町村名
@@ -170,7 +171,6 @@ def scrape_data(S:str,todou:str,siku:str) -> list[dict[str,str]]:
   list_houdei=[]
   if S in reigai:
     for ku in reigai[S]:
-      driver =get_site()
       if S in tyouhuku:
         select_tiiki_reigai_tyouhuku(driver,todou,siku,ku)  
       else:
@@ -181,7 +181,6 @@ def scrape_data(S:str,todou:str,siku:str) -> list[dict[str,str]]:
       list_houdei += ku_data
       driver.quit()
   else:
-    driver =get_site()
     select_todou(driver,todou)
     select_siku(driver,siku)
     list_houdei = get_data(driver)
