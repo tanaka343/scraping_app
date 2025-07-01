@@ -9,7 +9,7 @@ from selenium.common.exceptions import TimeoutException
 import pandas as pd
 from pathlib import Path
 from selenium.webdriver.remote.webelement import WebElement
-from utils.input_handlers import get_user_input,format_input_data
+from utils.input_handlers import get_user_input,split_address
 from utils.data_extractors import scrape_data
 from results.output import create_excelsheet,write_to_excel
 import sys 
@@ -30,7 +30,7 @@ def main():
 
   try:
     S,row_path =get_user_input()
-    todou,siku =format_input_data(S)
+    todou,siku =split_address(S)
     driver =get_site()
     list_houdei =scrape_data(driver,S,todou,siku)
     df_houdei = pd.DataFrame(list_houdei) 

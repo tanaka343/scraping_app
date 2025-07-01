@@ -7,7 +7,7 @@ def get_user_input() -> tuple[str,str]:
   row_path=input('excelファイルパスを入力').strip().replace('"','')
   return S,row_path
 
-def format_input_data(S) -> tuple[str,str]:
+def split_address(S) -> tuple[str,str]:
   """
   都道府県名と市区町村名を取得する
 
