@@ -11,7 +11,7 @@ from pathlib import Path
 from selenium.webdriver.remote.webelement import WebElement
 from utils.input_handlers import get_user_input,split_address
 from utils.data_extractors import scrape_data
-from results.output import create_excelsheet,write_to_excel
+from results.output import copy_template_sheet,write_to_excel
 import sys 
 from utils.selenium_helpers import get_site
 
@@ -29,15 +29,15 @@ def main():
   """
 
   try:
-    S,row_path =get_user_input()
-    todou,siku =split_address(S)
+    input_location,excel_path =get_user_input()
+    prefecture,city_name =split_address(input_location)
     driver =get_site()
-    list_houdei =scrape_data(driver,S,todou,siku)
-    df_houdei = pd.DataFrame(list_houdei) 
-    # wb_path,sheet_name =create_excelsheet(row_path,siku)   
-    # write_to_excel(wb_path,df_houdei,sheet_name)
+    facility_data_list =scrape_data(driver,input_location,prefecture,city_name)
+    df = pd.DataFrame(facility_data_list) 
+    # excel_path,sheet_name =copy_template_sheet(excel_path,city_name)   
+    # write_to_excel(excel_path,df,sheet_name)
 
-    print(df_houdei)
+    print(df)
     print(f"\033[0m\033[32m\033[1m処理が正常に完了しました。\033[0m")
 
   except ValueError :

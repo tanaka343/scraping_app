@@ -1,9 +1,10 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from utils.selenium_helpers import all_element,to_originaltab,open_link_in_newtab,wait_and_click,select_service,change_display_to_list,kirikae,go_next_page,select_siku,select_todou,select_tiiki_reigai_tyouhuku,get_site
+from utils.selenium_helpers import wait_until_visible,to_originaltab,open_link_in_newtab,wait_and_click,select_service,change_display_to_list,kirikae,go_next_page,select_city_name,select_prefecture,select_tiiki_exception_locations_duplicate_name_locations
+
 
 #--- 例外処理地域リスト---
-reigai={
+exception_locations={
   '北海道札幌市':["中央区","北区","東区","白石区","豊平区","南区","西区","厚別区","手稲区","清田区"],
   '宮城県仙台市':['青葉区', '宮城野区', '若林区', '太白区', '泉区'],
   '埼玉県さいたま市':["西区","北区","大宮区","見沼区","中央区","桜区","浦和区","南区","緑区","岩槻区"],
@@ -27,61 +28,60 @@ reigai={
   
 }
 #--- 同じ県内で重複する区のリスト ---
-tyouhuku=['神奈川県相模原市','大阪府堺市']
+duplicate_name_locations=['神奈川県相模原市','大阪府堺市']
 
 
 
-  
-
-
-def get_data_houjin(driver:webdriver.Chrome,data_houdei:dict[str,str]) -> dict[str,str]:
+def extract_houjin_name(driver:webdriver.Chrome,facility_data:dict[str,str]) -> dict[str,str]:
   """
   法人名を抽出して引数の辞書に追加して返す
   
   Parameters:
     driver (webdriver.Chrome): SeleniumのWebDriver.Chromeオブジェクト
-    data_houdei (dict[str,str]): 各施設情報を格納する辞書
+    facility_data (dict[str,str]): 各施設情報を格納する辞書
     
   Returns: ※この関数は辞書を更新するのみで戻り値はなし
-    data_houdei (dict[str,str]): 引数data_houdeiに取得した法人名を追加した辞書 (例: {'法人名':'株式会社ぴあサポート'})
+    facility_data (dict[str,str]): 引数facility_dataに取得した法人名を追加した辞書 (例: {'法人名':'株式会社ぴあサポート'})
   """
-  houjin = driver.find_element(By.XPATH,"//tr[td[text()='法人等の名称']]/td[2]")
-  data_houdei['法人名']=houjin.text
+  houjin_name = driver.find_element(By.XPATH,"//tr[td[text()='法人等の名称']]/td[2]")
+  facility_data['法人名']=houjin_name.text
 
-def get_data_jigyousyo(driver:webdriver.Chrome,data_houdei:dict[str,str]) -> dict[str,str]:
+
+def extract_jigyousho_info(driver:webdriver.Chrome,facility_data:dict[str,str]) -> dict[str,str]:
   """
   事業所の名称、電話番号、メールアドレス、ホームページを抽出して引数の辞書に追加して返す
 
    Parameters:
     driver (webdriver.Chrome): SeleniumのWebDriver.Chromeオブジェクト
-    data_houdei (dict[str,str]): 各施設情報を格納する辞書
+    facility_data (dict[str,str]): 各施設情報を格納する辞書
     
   Returns: ※この関数は辞書を更新するのみで戻り値はなし
-    data_houdei (dict[str,str]): 引数data_houdeiに取得した事業所情報を追加した辞書
+    facility_data (dict[str,str]): 引数facility_dataに取得した事業所情報を追加した辞書
     (例: {'法人名':'株式会社ぴあサポート','事業所名':'オリーブ','メール':'pia-olive@gui.ne.jp','電話':'072-275-9466','ホームページ':'http://www.pia-olive'})
   """
-  jigyousyo_data_locator =(By.CLASS_NAME, 'content_employee')
-  all_element(driver,jigyousyo_data_locator)
+  jigyousyo_locator =(By.CLASS_NAME, 'content_employee')
+  wait_until_visible(driver,jigyousyo_locator)
 
-  jig_name=driver.find_element(By.XPATH,"//tr[td/font[text()='事業所の名称']]/td[2]")
-  jig_tel=driver.find_element(By.XPATH,"//tr[td/font[text()='事業所の連絡先 電話番号']]/td[2]")
-  jig_mail=driver.find_element(By.XPATH,"//tr[td/font[text()='事業所の連絡先 電子メールアドレス']]/td[2]")
-  jig_url=driver.find_element(By.XPATH,"//tr[td/font[text()='事業所の連絡先 ホームページ']]/td[2]")
-  data_houdei['事業所名']=(jig_name.text)
-  data_houdei['メール']=(jig_mail.text)
-  data_houdei['電話']=(jig_tel.text)
-  data_houdei['ホームページ']=(jig_url.text)
+  jigyousyo_name=driver.find_element(By.XPATH,"//tr[td/font[text()='事業所の名称']]/td[2]")
+  jigyousyo_phone=driver.find_element(By.XPATH,"//tr[td/font[text()='事業所の連絡先 電話番号']]/td[2]")
+  jigyousyo_email=driver.find_element(By.XPATH,"//tr[td/font[text()='事業所の連絡先 電子メールアドレス']]/td[2]")
+  jigyousyo_website=driver.find_element(By.XPATH,"//tr[td/font[text()='事業所の連絡先 ホームページ']]/td[2]")
+  facility_data['事業所名']=(jigyousyo_name.text)
+  facility_data['メール']=(jigyousyo_email.text)
+  facility_data['電話']=(jigyousyo_phone.text)
+  facility_data['ホームページ']=(jigyousyo_website.text)
 
-def extract_data_from_page(driver:webdriver.Chrome,list_houdei:list[dict[str,str]]) -> list[dict[str,str]]:
+
+def collect_facility_data(driver:webdriver.Chrome,facility_data_list:list[dict[str,str]]) -> list[dict[str,str]]:
   """
   施設一覧ページ1ページ分の施設情報をスクレイピングし、引数のリストに辞書形式で追加して返す
 
   Parameters:
     driver (webdriver.Chrome): SeleniumのWebDriver.Chromeオブジェクト
-    list_houdei (list[dict[str,str]]) : 各施設情報を格納する辞書のリスト
+    facility_data_list (list[dict[str,str]]) : 各施設情報を格納する辞書のリスト
 
   Returns: ※この関数は辞書を更新するのみで戻り値はなし
-    list_houdei (list[dict[str,str]]) :引数list_houdeiに取得した情報を追加したリスト
+    facility_data_list (list[dict[str,str]]) :引数facility_data_listに取得した情報を追加したリスト
 
   Note:
     
@@ -90,30 +90,31 @@ def extract_data_from_page(driver:webdriver.Chrome,list_houdei:list[dict[str,str
     -取得後は元のタブに戻り、各施設を順に読み込み
    
   """
-  itiranElements =(By.XPATH,"//div[@class='detaillinkforeach']/a")
-  itiranList =all_element(driver,itiranElements)
+  facility_links_locator =(By.XPATH,"//div[@class='detaillinkforeach']/a")
+  facility_links =wait_until_visible(driver,facility_links_locator)
   
-  for targetElement in itiranList:
-    data_houdei ={} 
+  for facility_link in facility_links:
+    facility_data ={} 
     
-    #事業所の選択
-    driver.execute_script("arguments[0].scrollIntoView(true);", targetElement)
+    #施設リンクの選択
+    driver.execute_script("arguments[0].scrollIntoView(true);", facility_link)
     #新しいタブで開き切り替える
-    original_tab =open_link_in_newtab(driver,targetElement)
+    original_tab =open_link_in_newtab(driver,facility_link)
 
     #法人名取得
-    get_data_houjin(driver,data_houdei)
+    extract_houjin_name(driver,facility_data)
     #事業所情報ページへ移動
     jigyousyo_locator =(By.ID,'tab2_title')
     wait_and_click(driver,jigyousyo_locator)
     
-    #事業所情報抽出
-    get_data_jigyousyo(driver,data_houdei)
+    #事業所情報取得
+    extract_jigyousho_info(driver,facility_data)
 
-    list_houdei.append(data_houdei)
+    facility_data_list.append(facility_data)
     to_originaltab(driver,original_tab)
 
-def get_data(driver:webdriver.Chrome) -> list[dict[str,str]]:
+
+def collect_all_facility_data(driver:webdriver.Chrome) -> list[dict[str,str]]:
   """
   複数ページにまたがる施設情報をスクレイピングし、辞書形式のリストとしてまとめて返す
 
@@ -121,7 +122,7 @@ def get_data(driver:webdriver.Chrome) -> list[dict[str,str]]:
     driver (webdriver.Chrome): SeleniumのWebDriver.Chromeオブジェクト
 
   Returns:
-    list_houdei (list[dict[str,str]]) : 各施設情報を格納した辞書のリスト
+    facility_data_list (list[dict[str,str]]) : 各施設情報を格納した辞書のリスト
     ※施設情報が0件の場合は空のリストを返す。
      
   Note:
@@ -133,29 +134,30 @@ def get_data(driver:webdriver.Chrome) -> list[dict[str,str]]:
   select_service(driver)
   if change_display_to_list(driver)==False:
      return []
-  list_houdei =[]
+  facility_data_list =[]
   totalpage =int(driver.find_element(By.ID,'totalpage').text)
   for j in range(1,totalpage+1):
     pageElement =(By.ID,'currentpage')
     text2=str(j)
     kirikae(driver,pageElement,text2)
-    extract_data_from_page(driver,list_houdei)
+    collect_facility_data(driver,facility_data_list)
     if j<(totalpage) :
       go_next_page(driver)
-  return list_houdei
+  return facility_data_list
 
-def scrape_data(driver:webdriver.Chrome,S:str,todou:str,siku:str) -> list[dict[str,str]]:
+
+def scrape_data(driver:webdriver.Chrome,input_location:str,prefecture:str,city_name:str) -> list[dict[str,str]]:
   """
   指定された地域に対してスクレイピングを実行し、辞書形式のリストとしてまとめて返す
 
   Parameters:
     driver (webdriver.Chrome): SeleniumのWebDriver.Chromeオブジェクト
-    S (str): ユーザーが入力した地域名
-    todou (str) : 都道府県名
-    siku (str) : 市町村名
+    input_location (str): ユーザーが入力した地域名
+    prefecture (str) : 都道府県名
+    city_name (str) : 市町村名
 
   Returns: 
-    list_houdei (list[dict[str,str]]) : 各施設情報を格納した辞書のリスト
+    facility_data_list (list[dict[str,str]]) : 各施設情報を格納した辞書のリスト
 
   Note:
     通常、都道府県 → 市町村 を選択するが、
@@ -163,26 +165,26 @@ def scrape_data(driver:webdriver.Chrome,S:str,todou:str,siku:str) -> list[dict[s
     例外A）一部政令指定都市などは、都道府県 → 区（市町村項目内）を選択する構造になっている。
 
     例外B）さらに、同一都道府県内に同名の区が複数存在する場合に単に区の名前で検索すると最初に見つかった方が選択されてしまう。
-    そのため、市町村名:sikuと、区の名前:kuの両方でリンクを特定し選択する。
+    そのため、市町村名:city_nameと、区の名前:kuの両方でリンクを特定し選択する。
 
     例外A・Bの場合は、スクレイピング対象が多くseleniumの動作が安定稼働しないため、
     区ごとに都度ブラウザを起動・終了している。
   """
-  list_houdei=[]
-  if S in reigai:
-    for ku in reigai[S]:
-      if S in tyouhuku:
-        select_tiiki_reigai_tyouhuku(driver,todou,siku,ku)  
+  facility_data_list=[]
+  if input_location in exception_locations:
+    for ku in exception_locations[input_location]:
+      if input_location in duplicate_name_locations:
+        select_tiiki_exception_locations_duplicate_name_locations(driver,prefecture,city_name,ku)  
       else:
-        select_todou(driver,todou)
-        select_siku(driver,ku)
+        select_prefecture(driver,prefecture)
+        select_city_name(driver,ku)
 
-      ku_data = get_data(driver)
-      list_houdei += ku_data
+      ku_data = collect_all_facility_data(driver)
+      facility_data_list += ku_data
       driver.quit()
   else:
-    select_todou(driver,todou)
-    select_siku(driver,siku)
-    list_houdei = get_data(driver)
+    select_prefecture(driver,prefecture)
+    select_city_name(driver,city_name)
+    facility_data_list = collect_all_facility_data(driver)
     driver.quit() 
-  return list_houdei
+  return facility_data_list

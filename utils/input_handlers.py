@@ -3,16 +3,17 @@ import re
 
 def get_user_input() -> tuple[str,str]: 
   """ユーザーから地域とフォルダパスを取得する"""
-  S=input('地域を入力 （例：東京都豊島区）')
-  row_path=input('excelファイルパスを入力').strip().replace('"','')
-  return S,row_path
+  input_location=input('地域を入力 （例：東京都豊島区）')
+  excel_path =input('excelファイルパスを入力').strip().replace('"','')
+  return input_location,excel_path
 
-def split_address(S) -> tuple[str,str]:
+
+def split_address(input_location) -> tuple[str,str]:
   """
   都道府県名と市区町村名を取得する
 
   Parameters:
-    S (str): ユーザーが入力した地域名
+    input_location (str): ユーザーが入力した地域名
 
   Returns:
     tuple[str,str]: 都道府県名と市区町村名のタプル
@@ -28,14 +29,14 @@ def split_address(S) -> tuple[str,str]:
     例: '京都府京都市' は re.split(r'都|府|県', ...) を使うと分割数が不正になりエラーが出ます。
   """
  
-  match=re.search(r'北海道(.*)',S)
-  match2=re.search(r'京都府(.*)',S)
+  match=re.search(r'北海道(.*)',input_location)
+  match2=re.search(r'京都府(.*)',input_location)
   if match:
-    todou='北海道'
-    siku= match.group(1)
+    prefecture='北海道'
+    city_name= match.group(1)
   elif match2:
-    todou='京都'
-    siku=match2.group(1)
+    prefecture='京都'
+    city_name=match2.group(1)
   else:
-    todou,siku=re.split(r'都|府|県',S,maxsplit=2,flags=0)
-  return todou,siku
+    prefecture,city_name=re.split(r'都|府|県',input_location,maxsplit=2,flags=0)
+  return prefecture,city_name

@@ -24,7 +24,7 @@ def wait_and_click(driver:webdriver.Chrome,locator:str) -> None:
   )
   element.click()
 
-def all_element(driver:webdriver.Chrome,locator:tuple[str,str]) -> list[WebElement]:
+def wait_until_visible(driver:webdriver.Chrome,locator:tuple[str,str]) -> list[WebElement]:
   """すべての要素が表示されるまで待機して要素を取得"""
   elements =WebDriverWait(driver,20).until(
         EC.visibility_of_all_elements_located(locator)
@@ -120,7 +120,7 @@ def change_display_to_list(driver:webdriver.Chrome) -> bool:
 
   Note:
     施設の検索結果が0件の時は、itiran_locatorが見つからずTimeoutExceptionエラーが発生するため
-    その場合はFalseを返してget_data()の条件分岐で処理を抜ける。
+    その場合はFalseを返してcollect_all_facility_data()の条件分岐で処理を抜ける。
   """
   itiran_locator =(By.ID,'list')
   try:
@@ -134,14 +134,14 @@ def go_next_page(driver:webdriver.Chrome) -> None:
   nextpage_locator =(By.ID,'COP000101E22')
   wait_and_click(driver,nextpage_locator)
 
-def select_tiiki_reigai_tyouhuku(driver:webdriver.Chrome,todou:str,siku:str,ku:str) -> None:
+def select_tiiki_reigai_duplicate_name_locations(driver:webdriver.Chrome,prefecture:str,city_name:str,ku:str) -> None:
   """
   例外的なdom構造の地域を選択するブラウザ操作
 
   Parameters:
     driver (webdriver.Chrome): SeleniumのWebDriver.Chromeオブジェクト
-    todou (str) : 都道府県名
-    siku (str) : 市町村名
+    prefecture (str) : 都道府県名
+    city_name (str) : 市町村名
     ku (str) : 区の名前
 
   Returns: None
@@ -152,33 +152,33 @@ def select_tiiki_reigai_tyouhuku(driver:webdriver.Chrome,todou:str,siku:str,ku:s
     一部政令指定都市などは、都道府県 → 区（市町村項目内）を選択する構造になっている。
 
     さらに、同一都道府県内に同名の区が複数存在する場合に単に区の名前で検索すると最初に見つかった方が選択されてしまう。
-    そのため、市町村名:sikuと、区の名前:kuの両方でリンクを特定し選択する。
+    そのため、市町村名:city_nameと、区の名前:kuの両方でリンクを特定し選択する。
   """
-  select_todou(driver,todou)
-  siku_locator = (By.XPATH,f"//tr[th[text()='{siku}']]/following-sibling::tr/td/a[@title='{ku}']")
-  siku_a =WebDriverWait(driver, 10).until(
-        EC.element_to_be_clickable(siku_locator))
-  siku_a.click()
+  select_prefecture(driver,prefecture)
+  city_name_locator = (By.XPATH,f"//tr[th[text()='{city_name}']]/following-sibling::tr/td/a[@title='{ku}']")
+  city_name_a =WebDriverWait(driver, 10).until(
+        EC.element_to_be_clickable(city_name_locator))
+  city_name_a.click()
 
-def select_todou(driver:webdriver.Chrome,todou:str) -> None:
+def select_prefecture(driver:webdriver.Chrome,prefecture:str) -> None:
   """都道府県の選択操作を行う"""
   try:
-    todou_locator = (By.XPATH,f"//a[text()='{todou}']")
-    todou_a =WebDriverWait(driver,10).until(
-      EC.element_to_be_clickable(todou_locator)
+    prefecture_locator = (By.XPATH,f"//a[text()='{prefecture}']")
+    prefecture_a =WebDriverWait(driver,10).until(
+      EC.element_to_be_clickable(prefecture_locator)
     )
-    todou_a.click()
+    prefecture_a.click()
   except TimeoutException:
     raise TimeoutException('都道府県名が正しくありません。')
     
 
-def select_siku(driver:webdriver.Chrome,siku:str) -> None:
+def select_city_name(driver:webdriver.Chrome,city_name:str) -> None:
   """市町村の選択操作を行う"""
   try:
-    siku_locator = (By.XPATH,f"//a[@title='{siku}']")
-    siku_a =WebDriverWait(driver, 10).until(
-            EC.element_to_be_clickable(siku_locator))
-    siku_a.click()
+    city_name_locator = (By.XPATH,f"//a[@title='{city_name}']")
+    city_name_a =WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable(city_name_locator))
+    city_name_a.click()
   except TimeoutException:
     raise TimeoutException('市区町村名が正しくありません。')
     
