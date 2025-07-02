@@ -31,14 +31,14 @@ def wait_until_visible(driver:webdriver.Chrome,locator:tuple[str,str]) -> list[W
       )
   return elements
 
-def wait_for_transition(driver:webdriver.Chrome,locator:tuple[str,str],text:str) -> None:
+def wait_for_transition(driver:webdriver.Chrome,locator:tuple[str,str],expected_text:str) -> None:
   """
   画面が完全に切り替わるまで待機する
 
   Parameters:
     driver (webdriver.Chrome): SeleniumのWebDriver.Chromeオブジェクト
     locator (tuple[str,str]): Byクラスとセレクタ文字列のタプル (例: (By.CLASS_NAME, 'my-class'))
-    text (str): 画面切り替え後に表示される文字列
+    expected_text (str): 画面切り替え後に表示される文字列
 
   Returns: None
 
@@ -47,7 +47,7 @@ def wait_for_transition(driver:webdriver.Chrome,locator:tuple[str,str],text:str)
     画面切り替え後にブラウザ上に表示されるはずのテキストが現れるまで待機する。
   """
   WebDriverWait(driver,30).until(
-    EC.text_to_be_present_in_element(locator,text)
+    EC.text_to_be_present_in_element(locator,expected_text)
   )
 
 def force_click_js(driver:webdriver.Chrome,locator:tuple[str,str]) -> None:
@@ -139,15 +139,15 @@ def go_next_page(driver:webdriver.Chrome) -> None:
   wait_and_click(driver,nextpage_locator)
 
 
-def select_tiiki_reigai_duplicate_name_locations(driver:webdriver.Chrome,prefecture:str,city_name:str,ku:str) -> None:
+def process_ward_conflict(driver:webdriver.Chrome,prefecture:str,city_name:str,ward:str) -> None:
   """
-  例外的なdom構造の地域を選択するブラウザ操作
+  区名が衝突する場合の例外的に地域選択をする処理
 
   Parameters:
     driver (webdriver.Chrome): SeleniumのWebDriver.Chromeオブジェクト
     prefecture (str) : 都道府県名
     city_name (str) : 市町村名
-    ku (str) : 区の名前
+    ward (str) : 区の名前
 
   Returns: None
   
@@ -157,10 +157,10 @@ def select_tiiki_reigai_duplicate_name_locations(driver:webdriver.Chrome,prefect
     一部政令指定都市などは、都道府県 → 区（市町村項目内）を選択する構造になっている。
 
     さらに、同一都道府県内に同名の区が複数存在する場合に単に区の名前で検索すると最初に見つかった方が選択されてしまう。
-    そのため、市町村名:city_nameと、区の名前:kuの両方でリンクを特定し選択する。
+    そのため、市町村名:city_nameと、区の名前:wardの両方でリンクを特定し選択する。
   """
   select_prefecture(driver,prefecture)
-  city_name_locator = (By.XPATH,f"//tr[th[text()='{city_name}']]/following-sibling::tr/td/a[@title='{ku}']")
+  city_name_locator = (By.XPATH,f"//tr[th[text()='{city_name}']]/following-sibling::tr/td/a[@title='{ward}']")
   city_name_a =WebDriverWait(driver, 10).until(
         EC.element_to_be_clickable(city_name_locator))
   city_name_a.click()
@@ -170,21 +170,24 @@ def select_prefecture(driver:webdriver.Chrome,prefecture:str) -> None:
   """都道府県の選択操作を行う"""
   try:
     prefecture_locator = (By.XPATH,f"//a[text()='{prefecture}']")
-    prefecture_a =WebDriverWait(driver,10).until(
+    prefecture_link =WebDriverWait(driver,10).until(
       EC.element_to_be_clickable(prefecture_locator)
     )
-    prefecture_a.click()
+    prefecture_link.click()
   except TimeoutException:
+    driver.quit()
     raise TimeoutException('都道府県名が正しくありません。')
+    
     
 
 def select_city_name(driver:webdriver.Chrome,city_name:str) -> None:
   """市町村の選択操作を行う"""
   try:
     city_name_locator = (By.XPATH,f"//a[@title='{city_name}']")
-    city_name_a =WebDriverWait(driver, 10).until(
+    city_name_link =WebDriverWait(driver, 10).until(
             EC.element_to_be_clickable(city_name_locator))
-    city_name_a.click()
+    city_name_link.click()
   except TimeoutException:
+    driver.quit()
     raise TimeoutException('市区町村名が正しくありません。')
     
