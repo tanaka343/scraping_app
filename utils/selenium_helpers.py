@@ -31,7 +31,7 @@ def wait_until_visible(driver:webdriver.Chrome,locator:tuple[str,str]) -> list[W
       )
   return elements
 
-def kirikae(driver:webdriver.Chrome,locator:tuple[str,str],text:str) -> None:
+def wait_for_transition(driver:webdriver.Chrome,locator:tuple[str,str],text:str) -> None:
   """
   画面が完全に切り替わるまで待機する
 
@@ -50,7 +50,7 @@ def kirikae(driver:webdriver.Chrome,locator:tuple[str,str],text:str) -> None:
     EC.text_to_be_present_in_element(locator,text)
   )
 
-def js_click(driver:webdriver.Chrome,locator:tuple[str,str]) -> None:
+def force_click_js(driver:webdriver.Chrome,locator:tuple[str,str]) -> None:
   """ 
   jsでしか操作できない部分をクリック
 
@@ -70,6 +70,7 @@ def js_click(driver:webdriver.Chrome,locator:tuple[str,str]) -> None:
   driver.execute_script("arguments[0].scrollIntoView({ block: 'center' });",element)
   driver.execute_script("arguments[0].click();",element)
 
+
 def open_link_in_newtab(driver:webdriver.Chrome,element:WebElement) -> str:
   """リンクを新しいタブで開き、そちらに切り替える"""    
   #前タブ情報取得
@@ -81,19 +82,20 @@ def open_link_in_newtab(driver:webdriver.Chrome,element:WebElement) -> str:
   #後タブを取得
   current_tabs =driver.window_handles
   #新しいタブの取得移動
-  set_initial_tabs = set(initial_tabs)
-  set_current_tabs = set(current_tabs)
-  new_set= set_current_tabs-set_initial_tabs
-  new_tab = new_set.pop()
+  initial_tabs_set = set(initial_tabs)
+  current_tabs_set = set(current_tabs)
+  new_tab = (current_tabs_set-initial_tabs_set).pop()
   driver.switch_to.window(new_tab)
   return original_tab
+
 
 def to_originaltab(driver:webdriver.Chrome,original_tab:str) -> None:
   """現在のタブを閉じて、元のタブに戻る"""
   driver.close()
   driver.switch_to.window(original_tab)
+  
 
-def select_service(driver:webdriver.Chrome) -> None:
+def select_houkago_service(driver:webdriver.Chrome) -> None:
   """サービス一覧から放課後等デイサービスを選択するブラウザ操作"""
   
   servece_locator =(By.ID,"service")
@@ -101,12 +103,13 @@ def select_service(driver:webdriver.Chrome) -> None:
 
   #チェックボックスの要素を取得してクリック
   houkago_locator =(By.ID,"SRVC65")
-  js_click(driver,houkago_locator)
+  force_click_js(driver,houkago_locator)
 
   #画面が完全に切り替わるまで待機
-  title =(By.ID,"selectedServices")
-  text= "放課後等デイサービス"
-  kirikae(driver,title,text)
+  selected_service_locator =(By.ID,"selectedServices")
+  expected_text= "放課後等デイサービス"
+  wait_for_transition(driver,selected_service_locator,expected_text)
+
 
 def change_display_to_list(driver:webdriver.Chrome) -> bool:
   """
@@ -119,20 +122,22 @@ def change_display_to_list(driver:webdriver.Chrome) -> bool:
     bool : 処理成功でTrue、表示件数0件でFalse
 
   Note:
-    施設の検索結果が0件の時は、itiran_locatorが見つからずTimeoutExceptionエラーが発生するため
+    施設の検索結果が0件の時は、list_tab_locatorが見つからずTimeoutExceptionエラーが発生するため
     その場合はFalseを返してcollect_all_facility_data()の条件分岐で処理を抜ける。
   """
-  itiran_locator =(By.ID,'list')
+  list_tab_locator =(By.ID,'list')
   try:
-    wait_and_click(driver,itiran_locator)  
+    wait_and_click(driver,list_tab_locator)  
   except TimeoutException :
     return False
   return True
+
 
 def go_next_page(driver:webdriver.Chrome) -> None:
   """次のページへ移動"""
   nextpage_locator =(By.ID,'COP000101E22')
   wait_and_click(driver,nextpage_locator)
+
 
 def select_tiiki_reigai_duplicate_name_locations(driver:webdriver.Chrome,prefecture:str,city_name:str,ku:str) -> None:
   """
@@ -159,6 +164,7 @@ def select_tiiki_reigai_duplicate_name_locations(driver:webdriver.Chrome,prefect
   city_name_a =WebDriverWait(driver, 10).until(
         EC.element_to_be_clickable(city_name_locator))
   city_name_a.click()
+  
 
 def select_prefecture(driver:webdriver.Chrome,prefecture:str) -> None:
   """都道府県の選択操作を行う"""

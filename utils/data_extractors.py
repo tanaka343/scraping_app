@@ -1,6 +1,6 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from utils.selenium_helpers import wait_until_visible,to_originaltab,open_link_in_newtab,wait_and_click,select_service,change_display_to_list,kirikae,go_next_page,select_city_name,select_prefecture,select_tiiki_exception_locations_duplicate_name_locations
+from utils.selenium_helpers import wait_until_visible,to_originaltab,open_link_in_newtab,wait_and_click,select_houkago_service,change_display_to_list,wait_for_transition,go_next_page,select_city_name,select_prefecture,select_tiiki_exception_locations_duplicate_name_locations
 
 
 #--- 例外処理地域リスト---
@@ -131,7 +131,7 @@ def collect_all_facility_data(driver:webdriver.Chrome) -> list[dict[str,str]]:
     -総ページ数を取得し、各ページを順に読み込み
     -ページが切り替わってから、施設情報を抽出
   """
-  select_service(driver)
+  select_houkago_service(driver)
   if change_display_to_list(driver)==False:
      return []
   facility_data_list =[]
@@ -139,7 +139,7 @@ def collect_all_facility_data(driver:webdriver.Chrome) -> list[dict[str,str]]:
   for j in range(1,totalpage+1):
     pageElement =(By.ID,'currentpage')
     text2=str(j)
-    kirikae(driver,pageElement,text2)
+    wait_for_transition(driver,pageElement,text2)
     collect_facility_data(driver,facility_data_list)
     if j<(totalpage) :
       go_next_page(driver)
