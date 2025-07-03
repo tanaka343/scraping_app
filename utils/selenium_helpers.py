@@ -175,7 +175,9 @@ def select_prefecture(driver:webdriver.Chrome,prefecture:str) -> None:
     )
     prefecture_link.click()
   except TimeoutException:
+    driver.quit()
     raise TimeoutException('都道府県名が正しくありません。')
+    
     
 
 def select_city_name(driver:webdriver.Chrome,city_name:str) -> None:
@@ -186,5 +188,6 @@ def select_city_name(driver:webdriver.Chrome,city_name:str) -> None:
             EC.element_to_be_clickable(city_name_locator))
     city_name_link.click()
   except TimeoutException:
+    driver.quit()
     raise TimeoutException('市区町村名が正しくありません。')
     

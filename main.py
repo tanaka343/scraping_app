@@ -31,8 +31,7 @@ def main():
   try:
     input_location,excel_path =get_user_input()
     prefecture,city_name =split_address(input_location)
-    driver =get_site()
-    facility_data_list =scrape_data(driver,input_location,prefecture,city_name)
+    facility_data_list =scrape_data(input_location,prefecture,city_name)
     df = pd.DataFrame(facility_data_list) 
     # excel_path,sheet_name =copy_template_sheet(excel_path,city_name)   
     # write_to_excel(excel_path,df,sheet_name)
@@ -49,10 +48,11 @@ def main():
 
   except TimeoutException as e:
     print(f"エラーが発生:{e}")
-    driver.quit()
     sys.exit(1)
   except Exception:
     print('予期せぬエラーが発生しました。')
+    import traceback
+    traceback.print_exc()
 
   
 
