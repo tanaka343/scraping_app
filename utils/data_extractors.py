@@ -138,8 +138,8 @@ def collect_all_facility_data(driver:webdriver.Chrome) -> list[dict[str,str]]:
   totalpage =int(driver.find_element(By.ID,'totalpage').text)
   for j in range(1,totalpage+1):
     pageElement =(By.ID,'currentpage')
-    text2=str(j)
-    wait_for_transition(driver,pageElement,text2)
+    expected_text=str(j)
+    wait_for_transition(driver,pageElement,expected_text)
     collect_facility_data(driver,facility_data_list)
     if j<(totalpage) :
       go_next_page(driver)
@@ -170,17 +170,21 @@ def scrape_data(driver:webdriver.Chrome,input_location:str,prefecture:str,city_n
     例外A・Bの場合は、スクレイピング対象が多くseleniumの動作が安定稼働しないため、
     区ごとに都度ブラウザを起動・終了している。
   """
-  facility_data_list=[]
-  if input_location in exception_locations:
-    for ku in exception_locations[input_location]:
+  facility_data_list=[] 
+  try:
+    for ward in exception_locations[input_location]:
       if input_location in duplicate_name_locations:
-        select_tiiki_exception_locations_duplicate_name_locations(driver,prefecture,city_name,ku)  
+        driver =get_site()
+        process_ward_conflict(driver,prefecture,city_name,ward)  
       else:
         select_prefecture(driver,prefecture)
-        select_city_name(driver,ku)
+        select_city_name(driver,ward)
 
-      ku_data = collect_all_facility_data(driver)
-      facility_data_list += ku_data
+      ward_data = collect_all_facility_data(driver)
+      facility_data_list += ward_data
+      driver.quit()
+  finally:
+    try:
       driver.quit()
   else:
     select_prefecture(driver,prefecture)
