@@ -38,5 +38,5 @@ def split_address(input_location) -> tuple[str,str]:
     prefecture='京都'
     city_name=match2.group(1)
   else:
-    prefecture,city_name=re.split(r'都|府|県',input_location,maxsplit=2,flags=0)
+    prefecture,city_name=re.split(r'都|府|県',input_location,maxsplit=1,flags=0)
   return prefecture,city_name
