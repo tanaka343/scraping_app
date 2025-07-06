@@ -24,3 +24,11 @@ def test_split_address_normal(input_location,expected):
 def test_split_address_invalid_raises(input_location):
     with pytest.raises(ValueError):
         input_handlers.split_address(input_location)
+
+
+@pytest.mark.parametrize("input_location,expected",[
+    ('東京都府中市',('東京','府中市')),#市町村名に「府」
+    ('京都府京都市',('京都','京都市')),#都道府県名に「都」「府」
+])
+def test_split_address_boundary(input_location,expected):
+    assert input_handlers.split_address(input_location)== expected

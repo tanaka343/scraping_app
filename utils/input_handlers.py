@@ -29,8 +29,8 @@ def split_address(input_location) -> tuple[str,str]:
     例: '京都府京都市' は re.split(r'都|府|県', ...) を使うと分割数が不正になりエラーが出ます。
   """
  
-  match=re.search(r'北海道(.*)',input_location)
-  match2=re.search(r'京都府(.*)',input_location)
+  match=re.match(r'北海道(.*)',input_location)
+  match2=re.match(r'京都府(.*)',input_location)
   if match:
     prefecture='北海道'
     city_name= match.group(1)
