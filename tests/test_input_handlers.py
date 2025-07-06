@@ -9,6 +9,7 @@ from utils import input_handlers
 @pytest.mark.parametrize("input_location,expected",[
     ('東京都豊島区',('東京','豊島区')),
     ('北海道札幌市',('北海道','札幌市')),
+    ('北海道札',('北海道','札'))#select_city_nameでエラーを拾う
 ])
 def test_split_address_normal(input_location,expected):
     assert input_handlers.split_address(input_location) == expected
@@ -16,9 +17,9 @@ def test_split_address_normal(input_location,expected):
 
 @pytest.mark.parametrize("input_location",[
     '',
-    '札幌市',
-    # '北海道札',
-    # '東京都'
+    '札幌市',#都道府県名なし
+    '東京都',#市区町村名なし
+    '東京'
 ])
 def test_split_address_invalid_raises(input_location):
     with pytest.raises(ValueError):

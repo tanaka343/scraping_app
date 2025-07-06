@@ -32,8 +32,8 @@ def main():
     print(df)
     print(f"\033[0m\033[32m\033[1m処理が正常に完了しました。\033[0m")
     return facility_data_list
-  except ValueError :
-    print('入力形式が正しくありません。')
+  except ValueError as e:
+    print(f'[入力エラー]{e}')
     sys.exit(1)
   except PermissionError:
     print('excelファイルを閉じてください。')
