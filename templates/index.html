@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block content %}
+
+    <form action="/search" method="post">
+        <input type="text" name="input_location" value="例）東京都豊島区">
+        <button>検索</button>
+        {% if facility_list==[] %}
+            <p>データがありません。</p>
+        {% else %}
+            <table border="1">
+                <tr>
+                    <th>法人名</th>
+                    <th>事業所名</th>
+                    <th>メール</th>
+                    <th>電話番号</th>
+                    <th>ホームページ</th>
+                </tr>
+                {% for i in range(num) %}
+                <tr>
+                    <td>{{facility_list[i]['法人名']}}</td>
+                    <td>{{facility_list[i]['事業所名']}}</td>
+                    <td>{{facility_list[i]['メール']}}</td>
+                    <td>{{facility_list[i]['電話']}}</td>
+                    <td>{{facility_list[i]['ホームページ']}}</td>
+                </tr>
+                {% endfor %}
+            </table>
+        {% endif %}
+    </form>
+
+
+
+
+
+{% endblock %}
