@@ -29,15 +29,17 @@ def top():
   return render_template('index.html',facility_list=facility_list)
 
   
-@app.route('/search',methods=['GET','POST'])
+@app.route('/search',methods=['GET'])
 def search():
-  if request.method == 'POST':
-    input_location=request.form.get('input_location')
-    facility_list = main(input_location)
-    num=len(facility_list)
-    df = pd.DataFrame(facility_list) 
-    session['my_dataframe']=df.to_json(orient='split')
-    return render_template('/output.html',facility_list=facility_list,num=num)
+  input_location=request.args.get('input_location')
+  if not input_location:
+    return render_template('/index.html')
+  
+  facility_list = main(input_location)
+  num=len(facility_list)
+  df = pd.DataFrame(facility_list) 
+  session['my_dataframe']=df.to_json(orient='split')
+  return render_template('/output.html',facility_list=facility_list,num=num)
 
 # base_dir = os.path.dirname(__file__)
 # DOWNLOAD_DIR_PATH = os.path.join(base_dir,'自動化アプリ出力')
