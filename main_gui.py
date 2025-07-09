@@ -14,24 +14,65 @@ from utils.data_extractors import scrape_data
 from results.output import copy_template_sheet,write_to_excel
 import sys 
 from utils.selenium_helpers import get_site
-from flask import Flask,render_template,redirect,request
+from flask import Flask,render_template,redirect,request,send_from_directory,session,send_file
 import pandas as pd
+import os
+import io
 
 
 app = Flask(__name__)
+app.secret_key =os.urandom(24).hex()
 
 @app.route('/')
 def top():
   facility_list=[]
   return render_template('index.html',facility_list=facility_list)
-   
+
+  
 @app.route('/search',methods=['GET','POST'])
 def search():
   if request.method == 'POST':
     input_location=request.form.get('input_location')
     facility_list = main(input_location)
     num=len(facility_list)
-    return render_template('/index.html',facility_list=facility_list,num=num)
+    df = pd.DataFrame(facility_list) 
+    session['my_dataframe']=df.to_json(orient='split')
+    return render_template('/output.html',facility_list=facility_list,num=num)
+
+# base_dir = os.path.dirname(__file__)
+# DOWNLOAD_DIR_PATH = os.path.join(base_dir,'自動化アプリ出力')
+
+XLSX_MIMETYPE='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+CSV_MIMETYPE = 'text/csv'
+@app.route('/download', methods=['GET','POST'])
+def download():
+
+    if request.method=='POST':
+      json_data = session.get('my_dataframe')
+      df=pd.read_json(json_data,orient='split')
+      download_type=request.form.get('download')
+      output_buffer = io.BytesIO()
+
+      if download_type=="csv":
+        df.to_csv(output_buffer,index=False)
+        downloadFileName ='テスト.csv'
+        
+        file_mimetype = CSV_MIMETYPE
+      elif download_type=="excel":
+        
+        downloadFileName ='テストexcel.xlsx'
+        
+        file_mimetype =XLSX_MIMETYPE
+        with pd.ExcelWriter(output_buffer, engine='openpyxl') as writer:
+          df.to_excel(writer, index=False, sheet_name='データ')
+
+      
+      output_buffer.seek(0)
+      # session.pop('my_dataframe', None) 
+    
+      return send_file(output_buffer,  \
+          mimetype=file_mimetype,as_attachment = True, download_name = downloadFileName)
+    return render_template('/output.html')
 
 
 def main(input_location):
@@ -76,4 +117,5 @@ def main(input_location):
 
 if __name__ == "__main__":
   #  main()
-   app.run()
+  app.run()
+ 

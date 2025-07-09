@@ -1,20 +1,17 @@
 {% extends "base.html" %}
 {% block content %}
 
-    <form action="/search" method="post">
-        <input type="text" name="input_location" placeholder="例）東京都豊島区">
-        <button>検索</button>
-    </form>
-    <!-- {% if facility_list==[] %}
+    {% if facility_list==[] %}
         <p>データがありません。</p>
     {% else %}
-    <form action="/download" method="post">
-        <label for="csv">csv</label>
-        <input type="radio" id="csv" name="download" value="csv">
-        <label for="excel">excel</label>
-        <input type="radio" id="excel" name="download" value="excel">
-        <button type="submit">送信</button>
-    </form>
+        <form action="/download" method="post">
+            <label for="csv">csv</label>
+            <input type="radio" id="csv" name="download" value="csv">
+            <label for="excel">excel</label>
+            <input type="radio" id="excel" name="download" value="excel">
+            <button type="submit">送信</button>
+        </form>
+        <a href="index.html">検索画面へ戻る</a>
         <table border="1">
             <tr>
                 <th>法人名</th>
@@ -34,8 +31,8 @@
             {% endfor %}
         </table>
     {% endif %}
+    
 
- -->
 
 
 
