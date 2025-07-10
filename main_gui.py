@@ -58,18 +58,19 @@ def download():
 
     if request.method=='POST':
       json_data = session.get('my_dataframe')
+      input_location=session.get('last_input')
       df=pd.read_json(json_data,orient='split')
       download_type=request.form.get('download')
       output_buffer = io.BytesIO()
 
       if download_type=="csv":
         df.to_csv(output_buffer,index=False)
-        downloadFileName ='テスト.csv'
+        downloadFileName =f'{input_location}.csv'
         
         file_mimetype = CSV_MIMETYPE
       elif download_type=="excel":
         
-        downloadFileName ='テストexcel.xlsx'
+        downloadFileName =f'{input_location}.xlsx'
         
         file_mimetype =XLSX_MIMETYPE
         with pd.ExcelWriter(output_buffer, engine='openpyxl') as writer:
