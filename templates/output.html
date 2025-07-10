@@ -4,12 +4,13 @@
     {% if facility_list==[] %}
         <p>データがありません。</p>
     {% else %}
+        <h1>「{{input_location}}」の検索結果</h1>
         <form action="/download" method="post">
             <label for="csv">csv</label>
             <input type="radio" id="csv" name="download" value="csv">
             <label for="excel">excel</label>
             <input type="radio" id="excel" name="download" value="excel">
-            <button type="submit">送信</button>
+            <button type="submit">ダウンロード</button>
         </form>
         <a href="/">検索画面へ戻る</a>
         <table border="1">

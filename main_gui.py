@@ -46,7 +46,7 @@ def search():
     session['last_input']=input_location
 
   facility_list = df.to_dict(orient='records')
-  return render_template('/output.html',facility_list=facility_list)
+  return render_template('/output.html',facility_list=facility_list,input_location=input_location)
 
 # base_dir = os.path.dirname(__file__)
 # DOWNLOAD_DIR_PATH = os.path.join(base_dir,'自動化アプリ出力')
