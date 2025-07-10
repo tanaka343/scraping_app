@@ -11,7 +11,7 @@
             <input type="radio" id="excel" name="download" value="excel">
             <button type="submit">送信</button>
         </form>
-        <a href="index.html">検索画面へ戻る</a>
+        <a href="/">検索画面へ戻る</a>
         <table border="1">
             <tr>
                 <th>法人名</th>
@@ -20,16 +20,17 @@
                 <th>電話番号</th>
                 <th>ホームページ</th>
             </tr>
-            {% for i in range(num) %}
+            {% for facility in facility_list %}
             <tr>
-                <td>{{facility_list[i]['法人名']}}</td>
-                <td>{{facility_list[i]['事業所名']}}</td>
-                <td>{{facility_list[i]['メール']}}</td>
-                <td>{{facility_list[i]['電話']}}</td>
-                <td>{{facility_list[i]['ホームページ']}}</td>
+                <td>{{facility['法人名']}}</td>
+                <td>{{facility['事業所名']}}</td>
+                <td>{{facility['メール']}}</td>
+                <td>{{facility['電話']}}</td>
+                <td>{{facility['ホームページ']}}</td>
             </tr>
             {% endfor %}
         </table>
+        <pre>{{session}}</pre>
     {% endif %}
     
 
