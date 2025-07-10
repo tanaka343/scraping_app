@@ -21,7 +21,7 @@ import io
 
 
 app = Flask(__name__)
-app.secret_key =os.urandom(24).hex()
+app.secret_key ='abfdie1w4e2e5'
 
 @app.route('/')
 def top():
@@ -35,11 +35,18 @@ def search():
   if not input_location:
     return render_template('/index.html')
   
-  facility_list = main(input_location)
-  num=len(facility_list)
-  df = pd.DataFrame(facility_list) 
-  session['my_dataframe']=df.to_json(orient='split')
-  return render_template('/output.html',facility_list=facility_list,num=num)
+  if session.get('last_input')==input_location and session.get('my_dataframe'):
+    json_data=session.get('my_dataframe')
+    df=pd.read_json(json_data,orient='split')
+  else:
+    # facility_list = main(input_location)
+    # num=len(facility_list)
+    df = main(input_location)
+    session['my_dataframe']=df.to_json(orient='split')
+    session['last_input']=input_location
+
+  facility_list = df.to_dict(orient='records')
+  return render_template('/output.html',facility_list=facility_list)
 
 # base_dir = os.path.dirname(__file__)
 # DOWNLOAD_DIR_PATH = os.path.join(base_dir,'自動化アプリ出力')
@@ -99,7 +106,7 @@ def main(input_location):
 
     print(df)
     print(f"\033[0m\033[32m\033[1m処理が正常に完了しました。\033[0m")
-    return facility_data_list
+    return df
   except ValueError :
     print('入力形式が正しくありません。')
     sys.exit(1)
