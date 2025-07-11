@@ -74,7 +74,7 @@ def download():
         
         file_mimetype =XLSX_MIMETYPE
         with pd.ExcelWriter(output_buffer, engine='openpyxl') as writer:
-          df.to_excel(writer, index=False, sheet_name='データ')
+          df.to_excel(writer, index=False, sheet_name=f'{input_location}')
 
       
       output_buffer.seek(0)
@@ -107,7 +107,7 @@ def main(input_location):
 
     print(df)
     print(f"\033[0m\033[32m\033[1m処理が正常に完了しました。\033[0m")
-    return df
+    return df,city_name
   except ValueError :
     print('入力形式が正しくありません。')
     sys.exit(1)
