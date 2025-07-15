@@ -170,7 +170,7 @@ def select_prefecture(driver:webdriver.Chrome,prefecture:str) -> None:
   """都道府県の選択操作を行う"""
   try:
     prefecture_locator = (By.XPATH,f"//a[text()='{prefecture}']")
-    prefecture_link =WebDriverWait(driver,10).until(
+    prefecture_link =WebDriverWait(driver,5).until(
       EC.element_to_be_clickable(prefecture_locator)
     )
     prefecture_link.click()
@@ -184,7 +184,7 @@ def select_city_name(driver:webdriver.Chrome,city_name:str) -> None:
   """市町村の選択操作を行う"""
   try:
     city_name_locator = (By.XPATH,f"//a[@title='{city_name}']")
-    city_name_link =WebDriverWait(driver, 10).until(
+    city_name_link =WebDriverWait(driver, 5).until(
             EC.element_to_be_clickable(city_name_locator))
     city_name_link.click()
   except TimeoutException:
