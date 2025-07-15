@@ -4,39 +4,45 @@
     {% if facility_list==[] %}
         <p>データがありません。</p>
     {% else %}
-        <h1>「{{input_location}}」の検索結果</h1>
-        <form action="/download" method="post">
-            <label for="csv">csv</label>
-            <input type="radio" id="csv" name="download" value="csv">
-            <label for="excel">excel</label>
-            <input type="radio" id="excel" name="download" value="excel">
-            <button type="submit">ダウンロード</button>
-        </form>
-        <a href="/">検索画面へ戻る</a>
-        <table border="1">
-            <tr>
-                <th>法人名</th>
-                <th>事業所名</th>
-                <th>メール</th>
-                <th>電話番号</th>
-                <th>ホームページ</th>
-            </tr>
-            {% for facility in facility_list %}
-            <tr>
-                <td>{{facility['法人名']}}</td>
-                <td>{{facility['事業所名']}}</td>
-                <td>{{facility['メール']}}</td>
-                <td>{{facility['電話']}}</td>
-                <td>{{facility['ホームページ']}}</td>
-            </tr>
-            {% endfor %}
-        </table>
-        <pre>{{session}}</pre>
+        <div class="mt-5 d-flex align-items-center">
+            <div class="me-auto">
+                <h1 >「{{input_location}}」の検索結果</h1>
+                <a class="p-2" href="/">検索画面へ戻る</a>
+            </div>
+            <form class="d-flex p-2 gap-4 align-items-center" action="/download" method="post">
+                <div class="d-flex gap-2">
+                    <label for="csv">csv</label>
+                    <input type="radio" id="csv" name="download" value="csv">
+                </div> 
+                <div class="d-flex gap-2">
+                    <label for="excel">excel</label>
+                    <input type="radio" id="excel" name="download" value="excel">
+                </div> 
+                <button class="btn btn-primary" type="submit">ダウンロード</button>
+                
+            </form>
+            
+        </div>
+            <table class="table table-striped mt-3">
+                <tr>
+                    <th >法人名</th>
+                    <th >事業所名</th>
+                    <th >メール</th>
+                    <th >電話番号</th>
+                    <th >ホームページ</th>
+                </tr>
+                {% for facility in facility_list %}
+                <tr>
+                    <td>{{facility['法人名']}}</td>
+                    <td>{{facility['事業所名']}}</td>
+                    <td>{{facility['メール']}}</td>
+                    <td>{{facility['電話']}}</td>
+                    <td>{{facility['ホームページ']}}</td>
+                </tr>
+                {% endfor %}
+            </table>
+            <pre>{{session}}</pre>
+       
     {% endif %}
     
-
-
-
-
-
 {% endblock %}
