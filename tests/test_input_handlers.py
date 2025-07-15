@@ -19,7 +19,8 @@ def test_split_address_normal(input_location,expected):
     '',
     '札幌市',#都道府県名なし
     '東京都',#市区町村名なし
-    '東京'
+    '東京',
+    '東京都　豊島区'
 ])
 def test_split_address_invalid_raises(input_location):
     with pytest.raises(ValueError):
