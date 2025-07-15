@@ -1,11 +1,20 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="mt-5 mx-5 text-center">
-    <h1 class="text-center">放課後デイサービスリスト作成ツール</h1>
-    <form class=" p-5 d-flex justify-content-center gap-2" action="/search" method="get">
-        <input class="form-control w-auto" type="text" name="input_location" placeholder="例）東京都豊島区" class="input">
-        <button class="btn btn-primary">検索</button>
-    </form>
-</div>
     
+    <div class="mt-5 mx-5 text-center">
+        <h1 class="text-center">放課後デイサービスリスト作成ツール</h1>
+        
+        <form class=" p-5 d-flex justify-content-center gap-2" action="/search" method="get">
+            <input class="form-control w-auto" type="text" name="input_location" placeholder="例）東京都豊島区" class="input">
+            <button class="btn btn-primary">検索</button>
+        </form>
+    </div>
+    {% with messages=get_flashed_messages() %}
+        {% if messages %}
+            {% for message in messages %}
+                <p class="alert alert-info w-25 text-center m-auto" role="alert" >{{message}}</p>
+            {% endfor %}
+        {% endif %}
+    {% endwith %} 
+   
 {% endblock %}
