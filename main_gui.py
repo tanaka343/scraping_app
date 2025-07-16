@@ -15,7 +15,6 @@ from results.output import copy_template_sheet,write_to_excel
 import sys 
 from utils.selenium_helpers import get_site
 from flask import Flask,render_template,redirect,request,send_from_directory,session,send_file,flash
-import pandas as pd
 import os
 import io
 
@@ -46,11 +45,10 @@ def search():
       session['my_dataframe']=df.to_json(orient='split')
       session['last_input']=input_location
     except ValueError as e:
-      flash(f'[入力エラー]{e}','error')
-      # sys.exit(1)
+      flash(f'[入力エラー]{e}入力内容：{input_location}','error')
       return redirect('/')
     except TimeoutException as e:
-      flash(f'[入力エラー]{e}','error')
+      flash(f'[入力エラー]{e}入力内容：{input_location}','error')
       return redirect('/')
     except Exception as e:
       flash('予期せぬエラーが発生しました。','error')
