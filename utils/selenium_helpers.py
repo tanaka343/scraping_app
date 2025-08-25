@@ -12,6 +12,10 @@ def get_site() -> webdriver.Chrome:
   """chromeドライバーを開き対象ページを開く"""
   options = Options()
   options.add_experimental_option("detach", True)
+  options.add_argument('--headless')
+  options.add_argument('--no-sandbox')
+  options.add_argument('--disable-dev-shm-usage')
+  
   driver = webdriver.Chrome(options=options)
   driver.get("" \
   "https://www.wam.go.jp/sfkohyoout/COP000100E0000.do")
