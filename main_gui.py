@@ -24,15 +24,40 @@ app.secret_key ='abfdie1w4e2e5'
 
 @app.route('/')
 def top():
+  """
+    アプリのトップページを表示する関数
+
+    - 空の施設リストを作成する
+    - index.html テンプレートを描画して返す
+
+    Returns:
+        str: レンダリングされたHTML（index.html）
+  """
   facility_list=[]
   return render_template('index.html',facility_list=facility_list)
 
   
 @app.route('/search',methods=['GET'])
 def search():
+  """
+    施設検索を実行し、結果を表示する関数
+
+    - ユーザーが入力した地域名（input_location）を取得
+    - 入力がない場合はトップページ（index.html）に戻る
+    - 直前と同じ入力なら、セッションに保存してある検索結果を再利用
+    - 新しい入力なら main() を実行してスクレイピングし、DataFrameに変換
+    - 例外（ValueError, TimeoutException, その他）が発生した場合はエラーを表示してトップにリダイレクト
+    - 正常に結果が得られた場合は output.html に施設リストを渡して表示する
+
+    Returns:
+        str: レンダリングされたHTML（index.html または output.html）
+  """
+  #ユーザーが入力した地域の取得
   input_location=request.args.get('input_location')
+  #入力がなければ、トップページへ移動
   if not input_location:
     return render_template('/index.html')
+  
   df = None 
   if session.get('last_input')==input_location and session.get('my_dataframe'):
     json_data=session.get('my_dataframe')
@@ -44,12 +69,15 @@ def search():
       df = main(input_location)
       session['my_dataframe']=df.to_json(orient='split')
       session['last_input']=input_location
+
     except ValueError as e:
       flash(f'[入力エラー]{e}入力内容：{input_location}','error')
       return redirect('/')
+    
     except TimeoutException as e:
       flash(f'[入力エラー]{e}入力内容：{input_location}','error')
       return redirect('/')
+    
     except Exception as e:
       flash('予期せぬエラーが発生しました。','error')
       return redirect('/')
@@ -62,8 +90,10 @@ def search():
 # base_dir = os.path.dirname(__file__)
 # DOWNLOAD_DIR_PATH = os.path.join(base_dir,'自動化アプリ出力')
 
+
 XLSX_MIMETYPE='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
 CSV_MIMETYPE = 'text/csv'
+
 @app.route('/download', methods=['GET','POST'])
 def download():
 
