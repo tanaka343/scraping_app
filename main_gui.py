@@ -96,34 +96,45 @@ CSV_MIMETYPE = 'text/csv'
 
 @app.route('/download', methods=['GET','POST'])
 def download():
+  """
+    セッション内のDataFrameをCSVまたはExcel形式でダウンロードする。
 
-    if request.method=='POST':
-      json_data = session.get('my_dataframe')
-      input_location=session.get('last_input')
-      df=pd.read_json(json_data,orient='split')
-      download_type=request.form.get('download')
-      output_buffer = io.BytesIO()
+    POST:
+        - session['my_dataframe'] を取得して DataFrame に変換
+        - request.form['download'] で形式を判定 ("csv" or "excel")
+        - BytesIO バッファに書き込み
+        - send_file でダウンロード送信
 
-      if download_type=="csv":
-        df.to_csv(output_buffer,index=False)
-        downloadFileName =f'{input_location}.csv'
-        
-        file_mimetype = CSV_MIMETYPE
-      elif download_type=="excel":
-        
-        downloadFileName =f'{input_location}.xlsx'
-        
-        file_mimetype =XLSX_MIMETYPE
-        with pd.ExcelWriter(output_buffer, engine='openpyxl') as writer:
-          df.to_excel(writer, index=False, sheet_name=f'{input_location}')
+    GET:
+        - output.html を表示
+  """
+  if request.method=='POST':
+    json_data = session.get('my_dataframe')
+    input_location=session.get('last_input')
+    df=pd.read_json(json_data,orient='split')
+    download_type=request.form.get('download')
+    output_buffer = io.BytesIO()
 
+    if download_type=="csv":
+      df.to_csv(output_buffer,index=False)
+      downloadFileName =f'{input_location}.csv'
       
-      output_buffer.seek(0)
-      # session.pop('my_dataframe', None) 
+      file_mimetype = CSV_MIMETYPE
+    elif download_type=="excel":
+      
+      downloadFileName =f'{input_location}.xlsx'
+      
+      file_mimetype =XLSX_MIMETYPE
+      with pd.ExcelWriter(output_buffer, engine='openpyxl') as writer:
+        df.to_excel(writer, index=False, sheet_name=f'{input_location}')
+
     
-      return send_file(output_buffer,  \
-          mimetype=file_mimetype,as_attachment = True, download_name = downloadFileName)
-    return render_template('/output.html')
+    output_buffer.seek(0)
+    # session.pop('my_dataframe', None) 
+  
+    return send_file(output_buffer,  \
+        mimetype=file_mimetype,as_attachment = True, download_name = downloadFileName)
+  return render_template('/output.html')
 
 
 def main(input_location):
