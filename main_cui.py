@@ -26,8 +26,8 @@ def main():
     prefecture,city_name =split_address(input_location)
     facility_data_list =scrape_data(input_location,prefecture,city_name)
     df = pd.DataFrame(facility_data_list) 
-    # excel_path,sheet_name =copy_template_sheet(excel_path,city_name)   
-    # write_to_excel(excel_path,df,sheet_name)
+    excel_path,sheet_name =copy_template_sheet(excel_path,city_name)   
+    write_to_excel(excel_path,df,sheet_name)
 
     print(df)
     print(f"\033[0m\033[32m\033[1m処理が正常に完了しました。\033[0m")
