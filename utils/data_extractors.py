@@ -136,7 +136,7 @@ def collect_all_facility_data(driver:webdriver.Chrome) -> list[dict[str,str]]:
      return []
   facility_data_list =[]
   totalpage =int(driver.find_element(By.ID,'totalpage').text)
-  for j in range(1,totalpage+1):#totalpage+1
+  for j in range(1,2):#スクレイピング量削減(main:totalpage+1)
     pageElement =(By.ID,'currentpage')
     expected_text=str(j)
     wait_for_transition(driver,pageElement,expected_text)
