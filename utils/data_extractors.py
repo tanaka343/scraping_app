@@ -136,7 +136,7 @@ def collect_all_facility_data(driver:webdriver.Chrome) -> list[dict[str,str]]:
      return []
   facility_data_list =[]
   totalpage =int(driver.find_element(By.ID,'totalpage').text)
-  for j in range(1,totalpage+1):#totalpage+1
+  for j in range(1,totalpage+1):
     pageElement =(By.ID,'currentpage')
     expected_text=str(j)
     wait_for_transition(driver,pageElement,expected_text)
@@ -145,52 +145,6 @@ def collect_all_facility_data(driver:webdriver.Chrome) -> list[dict[str,str]]:
       go_next_page(driver)
   return facility_data_list
 
-
-# def scrape_data(driver:webdriver.Chrome,input_location:str,prefecture:str,city_name:str) -> list[dict[str,str]]:
-  """
-  指定された地域に対してスクレイピングを実行し、辞書形式のリストとしてまとめて返す
-
-  Parameters:
-    driver (webdriver.Chrome): SeleniumのWebDriver.Chromeオブジェクト
-    input_location (str): ユーザーが入力した地域名
-    prefecture (str) : 都道府県名
-    city_name (str) : 市町村名
-
-  Returns: 
-    facility_data_list (list[dict[str,str]]) : 各施設情報を格納した辞書のリスト
-
-  Note:
-    通常、都道府県 → 市町村 を選択するが、
-
-    例外A）一部政令指定都市などは、都道府県 → 区（市町村項目内）を選択する構造になっている。
-
-    例外B）さらに、同一都道府県内に同名の区が複数存在する場合に単に区の名前で検索すると最初に見つかった方が選択されてしまう。
-    そのため、市町村名:city_nameと、区の名前:wardの両方でリンクを特定し選択する。
-
-    例外A・Bの場合は、スクレイピング対象が多くseleniumの動作が安定稼働しないため、
-    区ごとに都度ブラウザを起動・終了している。
-  """
-#   facility_data_list=[]
-#   if input_location in exception_locations:
-#     for ward in exception_locations[input_location]:
-#       if input_location in duplicate_name_locations:
-#         driver =get_site()
-#         process_ward_conflict(driver,prefecture,city_name,ward)  
-#       else:
-#         driver =get_site()
-#         select_prefecture(driver,prefecture)
-#         select_city_name(driver,ward)
-
-#       ward_data = collect_all_facility_data(driver)
-#       facility_data_list += ward_data
-#       driver.quit()
-#   else:
-#     driver =get_site()
-#     select_prefecture(driver,prefecture)
-#     select_city_name(driver,city_name)
-#     facility_data_list = collect_all_facility_data(driver)
-#     driver.quit() 
-#   return facility_data_list
 
 
 def process_normal_location(prefecture:str,city_name:str)-> list[dict[str,str]]:
